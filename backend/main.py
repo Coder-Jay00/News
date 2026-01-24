@@ -30,17 +30,7 @@ def main():
     # 2. Ingest Data (Tier 2 RSS for now)
     print("\n--- STEP 1: INGESTION ---")
     raw_articles = ingestion.run_tier2_ingestion()
-    
-    # DEDUPLICATE: Prevent "ON CONFLICT DO UPDATE command cannot affect row a second time"
-    unique_articles = []
-    seen_links = set()
-    for art in raw_articles:
-        if art['link'] not in seen_links:
-            unique_articles.append(art)
-            seen_links.add(art['link'])
-    
-    raw_articles = unique_articles
-    print(f"Total Unique Articles: {len(raw_articles)}")
+    print(f"Total Raw Articles: {len(raw_articles)}")
     
     if not raw_articles:
         print("No articles found. Exiting.")
@@ -74,8 +64,16 @@ def main():
         tier1_articles = ingestion.fetch_newsdata()
         processed_articles.extend(tier1_articles) # Add Tier 1 (Pre-trusted)
 
-    # 4. Upload to Database
-    print(f"\n--- STEP 3: DATABASE UPLOAD ({len(processed_articles)} articles) ---")
+    # 4. Final Deduplication (Safeguard against Tier 1 overlaps)
+    final_articles = []
+    seen_links = set()
+    for art in processed_articles:
+        if art['link'] not in seen_links:
+            final_articles.append(art)
+            seen_links.add(art['link'])
+    processed_articles = final_articles
+
+    print(f"\n--- STEP 3: DATABASE UPLOAD ({len(processed_articles)} unique articles) ---")
     if processed_articles:
         db.upload_batch(processed_articles)
     else:
