@@ -1,0 +1,9 @@
+com.intelligence.brief
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme_TheIntelligenceBrief
+xml backup_rules
+xml data_extraction_rules

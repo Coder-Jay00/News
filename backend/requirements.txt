@@ -1,0 +1,7 @@
+requests
+feedparser
+beautifulsoup4
+pymongo
+supabase
+python-dotenv
+google-generativeai
