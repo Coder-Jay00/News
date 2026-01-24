@@ -18,6 +18,10 @@ elif os.path.exists("backend/.env"):
 def main():
     print("=== STARTING DAILY BRIEF PIPELINE ===")
     
+    # Debug Environment
+    print(f"DEBUG: SUPABASE_URL exists: {os.getenv('SUPABASE_URL') is not None}")
+    print(f"DEBUG: SUPABASE_KEY exists: {os.getenv('SUPABASE_KEY') is not None}")
+    
     # 1. Initialize Components
     ingestion = IngestionEngine()
     intel = IntelligenceAgent()
@@ -61,8 +65,11 @@ def main():
         processed_articles.extend(tier1_articles) # Add Tier 1 (Pre-trusted)
 
     # 4. Upload to Database
-    print("\n--- STEP 3: DATABASE UPLOAD ---")
-    db.upload_batch(processed_articles)
+    print(f"\n--- STEP 3: DATABASE UPLOAD ({len(processed_articles)} articles) ---")
+    if processed_articles:
+        db.upload_batch(processed_articles)
+    else:
+        print("SKIP: No processed articles to upload.")
     
     # 5. Send Push Notification (NEW!)
     print("\n--- STEP 4: PUSH NOTIFICATION ---")
