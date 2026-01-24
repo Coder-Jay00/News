@@ -91,15 +91,15 @@ def send_update_notification(version: str, download_url: str = "https://brief-io
         return False
     
     try:
+        # We use a DATA payload only for updates to force the app to use our
+        # custom notification handler which handles deep-linking to the URL.
         message = messaging.Message(
-            notification=messaging.Notification(
-                title="🚀 New Update Available!",
-                body=f"Brief. {version} is now available. Click to download and stay up to date."
-            ),
             data={
                 "type": "update",
                 "version": version,
-                "url": download_url
+                "url": download_url,
+                "title": "🚀 New Update Available!",
+                "body": f"Brief. {version} is now available. Click to download and stay up to date."
             },
             topic="news"
         )

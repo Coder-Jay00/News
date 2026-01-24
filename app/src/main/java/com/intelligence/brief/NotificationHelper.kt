@@ -50,30 +50,51 @@ object NotificationHelper {
     }
     
     /**
-     * Show a notification for new articles
+     * Show a generic notification with a custom title and optional URL
      */
-    fun showNewArticlesNotification(context: Context, articleCount: Int, topHeadline: String) {
+    fun showGenericNotification(context: Context, title: String, body: String, url: String? = null) {
         if (!hasNotificationPermission(context)) return
         
-        // Intent to open the app when tapped
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val intent = if (!url.isNullOrEmpty()) {
+            Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        } else {
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
         }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        
+        val pendingIntent = if (!url.isNullOrEmpty()) {
+            PendingIntent.getActivity(
+                context, System.currentTimeMillis().toInt(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon
-            .setContentTitle("📰 $articleCount new stories")
-            .setContentText(topHeadline)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(topHeadline))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
         
-        NotificationManagerCompat.from(context).notify(1001, notification)
+        NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    /**
+     * Show a notification for new articles
+     */
+    fun showNewArticlesNotification(context: Context, articleCount: Int, topHeadline: String) {
+        val title = if (articleCount > 0) "📰 $articleCount new stories" else "📰 Daily Brief Update"
+        showGenericNotification(context, title, topHeadline)
     }
 }

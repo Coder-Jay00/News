@@ -32,34 +32,33 @@ class BriefFirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d(TAG, "Message received from: ${remoteMessage.from}")
 
-        // Check if message contains a notification payload
-        remoteMessage.notification?.let { notification ->
-            val title = notification.title ?: "New Stories"
-            val body = notification.body ?: "Check out the latest news"
+        val data = remoteMessage.data
+        val notification = remoteMessage.notification
+
+        // 1. Prioritize Data Payload (for custom logic like Updates)
+        if (data.isNotEmpty()) {
+            val type = data["type"] ?: "news"
+            val title = data["title"] ?: notification?.title ?: "New Update"
+            val body = data["body"] ?: notification?.body ?: "Checking for latest brief..."
+            val url = data["url"]
+
+            if (type == "update" && url != null) {
+                // Specially handle update notifications with the download URL
+                NotificationHelper.showGenericNotification(this, title, body, url)
+                return
+            }
             
-            Log.d(TAG, "Notification - Title: $title, Body: $body")
-            
-            // Show local notification
-            NotificationHelper.showNewArticlesNotification(
-                context = this,
-                articleCount = 0, // Not used when we have a custom message
-                topHeadline = body
-            )
+            // Default news handling
+            val count = data["count"]?.toIntOrNull() ?: 0
+            NotificationHelper.showNewArticlesNotification(this, count, body)
+            return
         }
 
-        // Check if message contains data payload (for custom handling)
-        if (remoteMessage.data.isNotEmpty()) {
-            Log.d(TAG, "Data payload: ${remoteMessage.data}")
-            
-            val title = remoteMessage.data["title"] ?: "New Stories"
-            val body = remoteMessage.data["body"] ?: "Fresh news available"
-            val count = remoteMessage.data["count"]?.toIntOrNull() ?: 1
-            
-            NotificationHelper.showNewArticlesNotification(
-                context = this,
-                articleCount = count,
-                topHeadline = body
-            )
+        // 2. Fallback to standard Notification Payload
+        notification?.let { n ->
+            val title = n.title ?: "Brief."
+            val body = n.body ?: "New stories available"
+            NotificationHelper.showGenericNotification(this, title, body)
         }
     }
 }
