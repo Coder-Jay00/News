@@ -1,0 +1,25 @@
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk.dir is not checked in)
+local.properties
+
+# Android Studio files
+.idea/
+.DS_Store
+*.iml
+
+# Python
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# ENVIRONMENT VARIABLES (CRITICAL)
+backend/.env
+.env
+
+# Generated files
+captures/
+.externalNativeBuild/
+.cxx/
