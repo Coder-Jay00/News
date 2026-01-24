@@ -31,27 +31,28 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 fun getRelativeTime(publishedAt: String): String {
+    if (publishedAt.isEmpty()) return ""
     return try {
-        // Format: 2026-01-24T12:00:00Z or 2026-01-24T12:00:00+00:00
+        // Use a format that reliably handles the 'T' separator
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("UTC") // FORCE UTC globally for this parser
+
+        // Clean the string: remove 'Z' or anything after '+' or ' '
+        val cleanDate = publishedAt
+            .replace("Z", "")
+            .split("+")[0]
+            .split(" ")[0]
+            .trim()
+
+        val date = sdf.parse(cleanDate) ?: return ""
         
-        val date = if (publishedAt.contains("Z")) {
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-            sdf.parse(publishedAt.replace("Z", ""))
-        } else if (publishedAt.contains("+")) {
-            // Handle +HH:mm by finding the offset
-            val base = publishedAt.substringBefore("+")
-            sdf.parse(base)
-        } else {
-            // Default to UTC if no offset specified
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-            sdf.parse(publishedAt)
-        } ?: return ""
+        val now = System.currentTimeMillis()
+        val diff = now - date.time
         
-        val now = Date()
-        val diff = now.time - date.time
-        
-        val seconds = kotlin.math.abs(diff / 1000)
+        // If the date is in the future (due to slight clock skew), show "Just now"
+        if (diff < 0) return "Just now"
+
+        val seconds = diff / 1000
         val minutes = seconds / 60
         val hours = minutes / 60
         val days = hours / 24
