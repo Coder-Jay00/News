@@ -10,10 +10,12 @@ class DatabaseManager:
         key = os.getenv("SUPABASE_KEY")
         
         if not url or "YOUR_" in url:
-            raise ValueError(f"CRITICAL: SUPABASE_URL is invalid or missing! Detected: {url[:10]}...")
+            detected_val = url if url else "EMPTY"
+            raise ValueError(f"CRITICAL: SUPABASE_URL is {detected_val}! Did you add it to GitHub 'Repository Secrets'?")
             
         if not key or "YOUR_" in key:
-            raise ValueError(f"CRITICAL: SUPABASE_KEY is invalid or missing! Check your GitHub Secrets.")
+            detected_val = key if key else "EMPTY"
+            raise ValueError(f"CRITICAL: SUPABASE_KEY is {detected_val}! Did you add it to GitHub 'Repository Secrets'?")
 
         print(f"Connecting to Supabase: {url[:25]}...")
         self.client: Client = create_client(url, key)
