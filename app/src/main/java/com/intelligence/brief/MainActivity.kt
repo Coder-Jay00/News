@@ -43,6 +43,8 @@ fun getRelativeTime(publishedAt: String): String {
             val base = publishedAt.substringBefore("+")
             sdf.parse(base)
         } else {
+            // Default to UTC if no offset specified
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
             sdf.parse(publishedAt)
         } ?: return ""
         

@@ -17,9 +17,10 @@ class IngestionEngine:
                 {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNR3QwTlRFU0FtVnlHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "category": "Health"},
                 
                 # --- NICHE ---
-                # Tech & AI
-                {"url": "https://news.google.com/rss/search?q=artificial+intelligence+research+OR+LLM+architectures&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
-                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+zero+day&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
+                # Tech & AI - Focus on the last 12 hours for absolute freshness
+                {"url": "https://news.google.com/rss/search?q=AI+OR+LLM+OR+OpenAI+when:12h&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
+                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+hacker+when:12h&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
+                {"url": "https://news.google.com/rss/search?q=India+Top+Stories+when:12h&hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
             ]
         }
 
