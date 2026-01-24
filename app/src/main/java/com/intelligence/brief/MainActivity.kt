@@ -30,14 +30,19 @@ import java.util.*
 
 fun getRelativeTime(publishedAt: String): String {
     return try {
-        // Handle various ISO formats including 'Z' and offsets
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        // Format: 2026-01-24T12:00:00Z or 2026-01-24T12:00:00+00:00
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
         
-        // Clean the string (remove Z or offset for the basic parser if needed, 
-        // or use a more modern parser if available)
-        val cleanDate = publishedAt.replace("Z", "").substringBefore("+").substringBefore("-")
-        val date = sdf.parse(cleanDate) ?: return ""
+        val date = if (publishedAt.contains("Z")) {
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            sdf.parse(publishedAt.replace("Z", ""))
+        } else if (publishedAt.contains("+")) {
+            // Handle +HH:mm by finding the offset
+            val base = publishedAt.substringBefore("+")
+            sdf.parse(base)
+        } else {
+            sdf.parse(publishedAt)
+        } ?: return ""
         
         val now = Date()
         val diff = now.time - date.time
@@ -258,15 +263,16 @@ fun FeedScreen(
     ) { padding ->
         val pullToRefreshState = rememberPullToRefreshState()
         
-        if (pullToRefreshState.isRefreshing) {
-            LaunchedEffect(true) {
-                refresh()
+        // Connect the refreshing state
+        LaunchedEffect(pullToRefreshState.isRefreshing) {
+            if (pullToRefreshState.isRefreshing) {
+                isRefreshing = true
+                currentPage = 0
+                articles = repository.fetchArticles(0)
+                hasMore = articles.size >= DataRepository.PAGE_SIZE
+                isRefreshing = false
+                pullToRefreshState.endRefresh()
             }
-        }
-        
-        LaunchedEffect(isRefreshing) {
-            if (isRefreshing) pullToRefreshState.startRefresh()
-            else pullToRefreshState.endRefresh()
         }
 
         Box(

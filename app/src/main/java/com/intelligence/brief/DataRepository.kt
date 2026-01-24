@@ -38,7 +38,7 @@ class DataRepository(context: Context) {
     }
 
     companion object {
-        const val PAGE_SIZE = 15
+        const val PAGE_SIZE = 50
     }
 
     // Onboarding Logic
