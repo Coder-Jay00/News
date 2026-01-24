@@ -27,8 +27,8 @@ data class GitHubAsset(
 class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
-    private val currentVersion = "v1.0.0" // Matches BuildConfig.VERSION_NAME ideally
-    private val repoUrl = "https://api.github.com/repos/YOUR_USER/intelligence-brief/releases/latest"
+    private val currentVersion = "v1.0.0" 
+    private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
     suspend fun checkForUpdate(): String? {
         return withContext(Dispatchers.IO) {

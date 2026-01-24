@@ -83,3 +83,29 @@ def subscribe_token_to_news(fcm_token: str):
     except Exception as e:
         print(f"[FCM] Topic subscription failed: {e}")
         return False
+def send_update_notification(version: str, download_url: str = "https://brief-iota.vercel.app/"):
+    """
+    Send a push notification informing users of a new app version.
+    """
+    if not init_firebase():
+        return False
+    
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title="🚀 New Update Available!",
+                body=f"Brief. {version} is now available. Click to download and stay up to date."
+            ),
+            data={
+                "type": "update",
+                "version": version,
+                "url": download_url
+            },
+            topic="news"
+        )
+        response = messaging.send(message)
+        print(f"[FCM] Update notification sent: {response}")
+        return True
+    except Exception as e:
+        print(f"[FCM] Failed to send update notification: {e}")
+        return False
