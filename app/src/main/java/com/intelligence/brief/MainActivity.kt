@@ -232,6 +232,9 @@ fun FeedScreen(
     fun refresh() {
         scope.launch {
             isRefreshing = true
+            // Trigger a fresh news crawl in the background
+            repository.triggerSync()
+            
             currentPage = 0
             articles = repository.fetchArticles(0)
             hasMore = articles.size >= DataRepository.PAGE_SIZE

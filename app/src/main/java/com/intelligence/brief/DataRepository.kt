@@ -7,6 +7,10 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import io.ktor.client.HttpClient
+import io.ktor.client.request.post
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // Data Models
 @Serializable
@@ -106,4 +110,17 @@ class DataRepository(context: Context) {
 
     // Legacy method for compatibility
     suspend fun fetchDailyBrief(): List<Article> = fetchArticles(0)
+
+    // Trigger Cloud Sync (GitHub Action via Vercel Relay)
+    suspend fun triggerSync() {
+        withContext(Dispatchers.IO) {
+            try {
+                val client = HttpClient()
+                client.post("https://brief-iota.vercel.app/api/trigger-sync")
+                android.util.Log.d("DataRepo", "Cloud Sync Triggered Successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("DataRepo", "Failed to trigger Cloud Sync: ${e.message}")
+            }
+        }
+    }
 }
