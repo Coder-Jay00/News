@@ -55,7 +55,16 @@ def send_news_notification(article_count: int, top_headline: str):
                 "headline": top_headline
             },
             # Send to all users subscribed to 'news' topic
-            topic="news"
+            topic="news",
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    channel_id="brief_news_channel",
+                    priority="high",
+                    default_sound=True,
+                    default_vibrate_timings=True
+                )
+            )
         )
         
         # Send the message
@@ -101,7 +110,10 @@ def send_update_notification(version: str, download_url: str = "https://brief-io
                 "title": "🚀 New Update Available!",
                 "body": f"Brief. {version} is now available. Click to download and stay up to date."
             },
-            topic="news"
+            topic="news",
+            android=messaging.AndroidConfig(
+                priority="high"
+            )
         )
         response = messaging.send(message)
         print(f"[FCM] Update notification sent: {response}")
