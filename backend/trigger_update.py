@@ -5,7 +5,7 @@ if __name__ == "__main__":
     # Sending notification for v1.0.1 pointing to the web mirror
     success = send_update_notification(
         version="v1.0.1", 
-        download_url="https://brief-iota.vercel.app/"
+        download_url="https://brief-iota.vercel.app/Brief.apk"
     )
     if success:
         print("✅ Success: Update notification broadcast to all users.")

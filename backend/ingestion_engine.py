@@ -8,19 +8,17 @@ class IngestionEngine:
     def __init__(self):
         self.sources = {
             "tier2_rss": [
-                # --- GENERAL NEWS (Top Stories) ---
-                {"url": "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en", "category": "World News"},
-                {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnlHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "category": "Business"},
-                {"url": "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
-                {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp6Y1WtU0FtVnlHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "category": "Technology"},
-                {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnlHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "category": "Science"},
-                {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNR3QwTlRFU0FtVnlHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "category": "Health"},
+                # --- GENERAL NEWS (Forced Freshness: 1h) ---
+                {"url": "https://news.google.com/rss/search?q=world+news+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "World News"},
+                {"url": "https://news.google.com/rss/search?q=business+finance+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Business"},
+                {"url": "https://news.google.com/rss/search?q=India+breaking+news+when:1h&hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
+                {"url": "https://news.google.com/rss/search?q=technology+innovation+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Technology"},
+                {"url": "https://news.google.com/rss/search?q=science+research+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Science"},
+                {"url": "https://news.google.com/rss/search?q=health+medical+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Health"},
                 
-                # --- NICHE ---
-                # Tech & AI - Focus on the last 12 hours for absolute freshness
-                {"url": "https://news.google.com/rss/search?q=AI+OR+LLM+OR+OpenAI+when:12h&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
-                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+hacker+when:12h&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
-                {"url": "https://news.google.com/rss/search?q=India+Top+Stories+when:12h&hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
+                # --- NICHE (Extreme Freshness) ---
+                {"url": "https://news.google.com/rss/search?q=AI+LLM+OR+Nvidia+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
+                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+hacker+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
             ]
         }
 
