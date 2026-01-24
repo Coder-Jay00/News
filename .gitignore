@@ -19,6 +19,7 @@ backend/__pycache__/
 backend/.env
 .env
 backend/firebase-service-account.json
+app/google-services.json
 
 # Generated files
 captures/
