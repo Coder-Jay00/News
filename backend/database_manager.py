@@ -10,14 +10,13 @@ class DatabaseManager:
         key = os.getenv("SUPABASE_KEY")
         
         if not url or "YOUR_" in url:
-            print("ERROR: SUPABASE_URL is missing or contains a placeholder!")
-            self.client = None
-        elif not key or "YOUR_" in key:
-            print("ERROR: SUPABASE_KEY is missing or contains a placeholder!")
-            self.client = None
-        else:
-            print(f"Connecting to Supabase at: {url[:25]}...")
-            self.client: Client = create_client(url, key)
+            raise ValueError(f"CRITICAL: SUPABASE_URL is invalid or missing! Detected: {url[:10]}...")
+            
+        if not key or "YOUR_" in key:
+            raise ValueError(f"CRITICAL: SUPABASE_KEY is invalid or missing! Check your GitHub Secrets.")
+
+        print(f"Connecting to Supabase: {url[:25]}...")
+        self.client: Client = create_client(url, key)
 
     def upload_batch(self, articles: List[Dict]):
         """Uploads a batch of processed articles to 'articles' table."""

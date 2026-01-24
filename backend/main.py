@@ -8,7 +8,12 @@ import json
 import os
 
 # 1. Load Environment Variables (Only for local dev)
-load_dotenv()
+if os.path.exists(".env"):
+    load_dotenv()
+    print("Local .env loaded.")
+elif os.path.exists("backend/.env"):
+    load_dotenv("backend/.env")
+    print("Local backend/.env loaded.")
 
 def main():
     print("=== STARTING DAILY BRIEF PIPELINE ===")
