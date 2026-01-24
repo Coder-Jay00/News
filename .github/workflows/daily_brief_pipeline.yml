@@ -28,5 +28,5 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          # NEWSDATA_API_KEY: ${{ secrets.NEWSDATA_API_KEY }} # Uncomment if Tier 1 is added
+          NEWSDATA_API_KEY: ${{ secrets.NEWSDATA_API_KEY }}
         run: python backend/main.py
