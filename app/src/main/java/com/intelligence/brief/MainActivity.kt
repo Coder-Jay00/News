@@ -390,9 +390,15 @@ fun NewsCard(article: Article) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Summary (Prioritize AI Summary)
+            // Summary (Prioritize AI Summary only if it succeeded)
+            val displaySummary = if (article.aiSummary != null && article.aiSummary != "Analysis Failed") {
+                article.aiSummary
+            } else {
+                article.summary
+            }
+            
             Text(
-                text = HtmlTextMapper.fromHtml(article.aiSummary ?: article.summary), 
+                text = HtmlTextMapper.fromHtml(displaySummary), 
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 4,

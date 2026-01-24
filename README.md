@@ -6,75 +6,27 @@ A "Zero Rupee" intelligence tool designed for tech students and professionals. I
 
 ---
 
-## 🏗 Architecture
+## 🏗 Technical Stack
 
-The system follows a **"Headless"** architecture to stay within free-tier limits:
+The system follows a **"Headless" Agentic** architecture:
 
-1.  **Backend (The "Agent")**:
-    *   **Python Scripts**: Runs on **GitHub Actions** (CRON_SCHEDULE: Every 12 hours).
-    *   **Ingestion**: Fetches news from Google News RSS (Tier 2) and NewsData.io (Tier 1 Fallback).
-    *   **Intelligence**: Uses **Google Gemini 1.5 Flash** to summarize and rate articles ("Trust Badge").
-    *   **Database**: Pushes cleaned data to **Supabase (PostgreSQL)**.
-
-2.  **Mobile App (The "Terminal")**:
-    *   **Native Android (Kotlin + Jetpack Compose)**.
-    *   **Direct-to-DB**: Connects directly to Supabase `public` schema (Read-Only) securely.
-    *   **Features**: Dark Mode, Offline Caching, Interest filtering (India/World/Tech).
+- **The Agent (Python)**: Deployed via GitHub Actions. Automates news discovery, AI reasoning, and database synchronization every 12 hours.
+- **The Brain (Gemini 1.5 Flash)**: Processes raw RSS feeds into actionable intelligence. Assigns "Trust Badges" and generates context-aware summaries.
+- **The Core (Supabase)**: Real-time PostgreSQL database that bridges the gap between the headless worker and the mobile client.
+- **The Terminal (Android)**: A high-performance, native client built with Jetpack Compose. Features biometric-grade focus, offline caching, and native notifications.
 
 ---
 
-## 🚀 Setup Guide
+## 🛡️ License & Ethics
 
-### 1. Prerequisites
-*   **Python 3.10+**
-*   **Android Studio Ladybug (or newer)**
-*   **Supabase Account** (Free Project)
-*   **Google Gemini API Key** (Free)
+**MIT License**
 
-### 2. Backend Setup
-1.  Navigate to `backend/`.
-2.  Create virtual environment:
-    ```powershell
-    python -m venv venv
-    .\venv\Scripts\Activate
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  Configure `.env` file in `backend/`:
-    ```ini
-    SUPABASE_URL=https://your-project-id.supabase.co
-    SUPABASE_KEY=eyJ... (Use SERVICE_ROLE key)
-    GEMINI_API_KEY=AIza...
-    NEWSDATA_API_KEY=pub_... (Optional)
-    ```
-5.  **Initialize Database**:
-    *   Go to Supabase Dashboard -> SQL Editor.
-    *   Run the contents of `backend/schema.sql`.
+Copyright (c) 2026 Coder-Jay00
 
-### 3. Mobile App Setup
-1.  Open valid `Android Studio`.
-2.  Open `app/src/main/java/com/intelligence/brief/DataRepository.kt`.
-3.  Update the Supabase Config:
-    ```kotlin
-    supabaseUrl = "https://your-project-id.supabase.co"
-    supabaseKey = "eyJ..." // (Use ANON / PUBLIC key)
-    ```
-4.  Sync Gradle and Run 🟢.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.
+
+**The "Zero Rupee" Philosophy**: This project is and will always be dedicated to providing high-quality, ad-free intelligence for students and professionals. Contributions are welcome to keep the signal pure and the costs zero.
 
 ---
 
-## 🤖 Manual Operation
-To trigger an update manually (outside of GitHub Actions):
-
-```powershell
-# In terminal
-.\venv\Scripts\Activate
-python backend/main.py
-```
-
----
-
-## 🛡️ License
-MIT License. Built for educational purposes.
+*“Information is not knowledge. Knowledge is not wisdom. Wisdom is not truth.”* — **Brief.**
