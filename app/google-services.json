@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "547844393720",
+    "project_id": "brief-37d3c",
+    "storage_bucket": "brief-37d3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547844393720:android:2fe29cd0000f5a41d2490d",
+        "android_client_info": {
+          "package_name": "com.intelligence.brief"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCugWzwFaA5m5Ugp3krE6iWKEvviyBHP9I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

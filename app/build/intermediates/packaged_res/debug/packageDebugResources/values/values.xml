@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Brief.</string>
+    <string name="gcm_defaultSenderId" translatable="false">547844393720</string>
+    <string name="google_api_key" translatable="false">AIzaSyCugWzwFaA5m5Ugp3krE6iWKEvviyBHP9I</string>
+    <string name="google_app_id" translatable="false">1:547844393720:android:2fe29cd0000f5a41d2490d</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCugWzwFaA5m5Ugp3krE6iWKEvviyBHP9I</string>
+    <string name="google_storage_bucket" translatable="false">brief-37d3c.firebasestorage.app</string>
+    <string name="project_id" translatable="false">brief-37d3c</string>
     <style name="Theme.TheIntelligenceBrief" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">#0F0F0F</item>
     </style>

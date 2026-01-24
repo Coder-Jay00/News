@@ -5,3 +5,4 @@ pymongo
 supabase
 python-dotenv
 google-generativeai
+firebase-admin

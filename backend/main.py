@@ -1,6 +1,7 @@
 from ingestion_engine import IngestionEngine
 from intelligence_agent import IntelligenceAgent
 from database_manager import DatabaseManager
+from push_notifier import send_news_notification
 import time
 import json
 
@@ -53,8 +54,17 @@ def main():
     print("\n--- STEP 3: DATABASE UPLOAD ---")
     db.upload_batch(processed_articles)
     
-    # 5. Cleanup
-    print("\n--- STEP 4: CLEANUP ---")
+    # 5. Send Push Notification (NEW!)
+    print("\n--- STEP 4: PUSH NOTIFICATION ---")
+    if processed_articles:
+        top_headline = processed_articles[0].get('title', 'New stories available')
+        send_news_notification(
+            article_count=len(processed_articles),
+            top_headline=top_headline
+        )
+    
+    # 6. Cleanup
+    print("\n--- STEP 5: CLEANUP ---")
     db.purge_old_data(hours=48)
     
     print("\n=== PIPELINE COMPLETE ===")

@@ -15,9 +15,10 @@ backend/venv/
 backend/__pycache__/
 *.pyc
 
-# ENVIRONMENT VARIABLES (CRITICAL)
+# Credentials
 backend/.env
 .env
+backend/firebase-service-account.json
 
 # Generated files
 captures/

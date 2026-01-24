@@ -42,6 +42,19 @@ class MainActivity : ComponentActivity() {
         // Setup notifications
         NotificationHelper.createNotificationChannel(this)
         requestNotificationPermission()
+        
+        // Subscribe to Firebase 'news' topic for push notifications
+        com.google.firebase.messaging.FirebaseMessaging.getInstance()
+            .subscribeToTopic("news")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    android.util.Log.d("FCM", "Subscribed to news topic")
+                }
+            }
+        
+        // Background sync (as fallback)
+        NewsSyncWorker.schedule(this)
+
 
         setContent {
             // Theme state: null = follow device system theme (default behavior)
@@ -130,9 +143,21 @@ fun FeedScreen(
     var articles by remember { mutableStateOf<List<Article>>(emptyList()) }
     var currentPage by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
     var hasMore by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Refresh function - reloads from scratch
+    fun refresh() {
+        scope.launch {
+            isRefreshing = true
+            currentPage = 0
+            articles = repository.fetchArticles(0)
+            hasMore = articles.size >= DataRepository.PAGE_SIZE
+            isRefreshing = false
+        }
+    }
 
     // Initial load
     LaunchedEffect(true) {
@@ -150,7 +175,7 @@ fun FeedScreen(
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             lastVisibleIndex >= totalItems - 3 // Trigger when 3 items from bottom
         }.collect { nearBottom ->
-            if (nearBottom && hasMore && !isLoading && articles.isNotEmpty()) {
+            if (nearBottom && hasMore && !isLoading && !isRefreshing && articles.isNotEmpty()) {
                 isLoading = true
                 currentPage++
                 val moreArticles = repository.fetchArticles(currentPage)
@@ -176,6 +201,16 @@ fun FeedScreen(
                     ) 
                 },
                 actions = {
+                    // Refresh Button
+                    IconButton(
+                        onClick = { refresh() },
+                        enabled = !isRefreshing
+                    ) {
+                        Text(
+                            text = if (isRefreshing) "..." else "↻",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
                     // Settings Button
                     IconButton(onClick = onOpenSettings) {
                         Text("⚙️", style = MaterialTheme.typography.titleLarge)
@@ -195,47 +230,54 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        if (articles.isEmpty() && isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
-        } else if (articles.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No articles found", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        } else {
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.padding(padding)
-            ) {
-                items(articles) { article ->
-                    NewsCard(article)
-                    Spacer(modifier = Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (articles.isEmpty() && isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
-                
-                // Loading indicator at bottom
-                if (isLoading && hasMore) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
+            } else if (articles.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No articles found\nPull down to refresh", 
+                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                         textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(articles) { article ->
+                        NewsCard(article)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    
+                    // Loading indicator at bottom
+                    if (isLoading && hasMore) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
                         }
                     }
-                }
-                
-                // End of list message
-                if (!hasMore && articles.isNotEmpty()) {
-                    item {
-                        Text(
-                            "You're all caught up! ✓",
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    
+                    // End of list message
+                    if (!hasMore && articles.isNotEmpty()) {
+                        item {
+                            Text(
+                                "You're all caught up! ✓",
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
