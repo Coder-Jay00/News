@@ -29,6 +29,7 @@ export default async function handler(req, res) {
                     "Authorization": `Bearer ${GITHUB_TOKEN}`,
                     "Accept": "application/vnd.github.v3+json",
                     "Content-Type": "application/json",
+                    "User-Agent": "Brief-Relay-Worker"
                 },
                 body: JSON.stringify({
                     ref: "main", // Trigger the main branch
