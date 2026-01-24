@@ -23,6 +23,34 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.intelligence.brief.ui.theme.BriefTheme
+import androidx.compose.material3.pulltorefresh.*
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import java.text.SimpleDateFormat
+import java.util.*
+
+fun getRelativeTime(publishedAt: String): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        val date = sdf.parse(publishedAt) ?: return ""
+        val now = Date()
+        val diff = now.time - date.time
+        
+        val seconds = diff / 1000
+        val minutes = seconds / 60
+        val hours = minutes / 60
+        val days = hours / 24
+
+        when {
+            days > 0 -> "${days}d ago"
+            hours > 0 -> "${hours}h ago"
+            minutes > 0 -> "${minutes}m ago"
+            else -> "Just now"
+        }
+    } catch (e: Exception) {
+        ""
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -200,21 +228,13 @@ fun FeedScreen(
                         fontWeight = FontWeight.Bold
                     ) 
                 },
-                actions = {
-                    // Refresh Button
-                    IconButton(
-                        onClick = { refresh() },
-                        enabled = !isRefreshing
-                    ) {
-                        Text(
-                            text = if (isRefreshing) "..." else "↻",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                    // Settings Button
+                navigationIcon = {
+                    // Settings Button on the left
                     IconButton(onClick = onOpenSettings) {
                         Text("⚙️", style = MaterialTheme.typography.titleLarge)
                     }
+                },
+                actions = {
                     // Theme Toggle Button
                     IconButton(onClick = onToggleTheme) {
                         Text(
@@ -230,10 +250,24 @@ fun FeedScreen(
             )
         }
     ) { padding ->
+        val pullToRefreshState = rememberPullToRefreshState()
+        
+        if (pullToRefreshState.isRefreshing) {
+            LaunchedEffect(true) {
+                refresh()
+            }
+        }
+        
+        LaunchedEffect(isRefreshing) {
+            if (isRefreshing) pullToRefreshState.startRefresh()
+            else pullToRefreshState.endRefresh()
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
             if (articles.isEmpty() && isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -281,6 +315,12 @@ fun FeedScreen(
                     }
                 }
             }
+
+            // Pull refresh indicator at the top
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
@@ -314,6 +354,14 @@ fun NewsCard(article: Article) {
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                val timeAgo = getRelativeTime(article.published)
+                if (timeAgo.isNotEmpty()) {
+                    Text(
+                        text = " • $timeAgo",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(10.dp))

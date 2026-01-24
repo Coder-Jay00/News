@@ -51,24 +51,30 @@ class DataRepository(context: Context) {
         return prefs.getStringSet("interests", setOf("AI & Frontiers", "Cybersecurity")) ?: emptySet()
     }
 
-    // Data Fetching with Pagination
+    // Data Fetching with Pagination - Server Side Filtering & Sorting
     suspend fun fetchArticles(page: Int = 0): List<Article> {
         val interests = getInterests()
+        if (interests.isEmpty()) return emptyList()
+
         try {
-            val allArticles = supabase.from("articles")
-                .select()
+            // Calculate range for pagination
+            val fromIndex = page * PAGE_SIZE
+            val toIndex = fromIndex + PAGE_SIZE - 1
+
+            return supabase.from("articles")
+                .select() {
+                    filter {
+                        // Efficient Postgrest filtering: 'category' MUST be in the 'interests' list
+                        isIn("category", interests.toList())
+                    }
+                    // Sort by publication date DESC (Newest First)
+                    order("published", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+                    // Pagination on the server
+                    range(fromIndex.toLong(), toIndex.toLong())
+                }
                 .decodeList<Article>()
-                .filter { it.category in interests }
-                .sortedByDescending { it.published }
-            
-            // Pagination: skip previous pages, take PAGE_SIZE
-            val startIndex = page * PAGE_SIZE
-            if (startIndex >= allArticles.size) return emptyList()
-            
-            return allArticles.drop(startIndex).take(PAGE_SIZE)
         } catch (e: Exception) {
-            android.util.Log.e("DataRepo", "Error fetching data", e)
-            e.printStackTrace()
+            android.util.Log.e("DataRepo", "Error fetching data from Supabase", e)
             return emptyList()
         }
     }

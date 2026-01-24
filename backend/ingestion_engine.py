@@ -25,18 +25,26 @@ class IngestionEngine:
 
     def fetch_rss_feed(self, url: str, category: str) -> List[Dict]:
         """Fetches and normalizes RSS feed data."""
+        from dateutil import parser # Robust date parsing
+        
         print(f"Fetching RSS: {url}...")
         feed = feedparser.parse(url)
         articles = []
         
         for entry in feed.entries[:10]: # Limit to top 10 per feed to avoid noise
-            # Basic deduplication ID (link)
+            # Normalize published date
+            raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
+            try:
+                iso_date = parser.parse(raw_date).isoformat()
+            except:
+                iso_date = datetime.datetime.now().isoformat()
+
             articles.append({
                 "title": entry.title,
                 "link": entry.link,
-                "published": entry.get("published", str(datetime.datetime.now())),
+                "published": iso_date,
                 "summary": entry.get("summary", ""),
-                "source": entry.source.get("title", "Unknown"),
+                "source": entry.source.get("title", "Unknown") if hasattr(entry, "source") else "Google News",
                 "category": category,
                 "tier": 2, # Tier 2 = Broad RSS
                 "trust_badge": "Unverified" # Default until Gemini checks it
