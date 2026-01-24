@@ -79,7 +79,21 @@ class DataRepository(context: Context) {
                 }
             
             val list = response.decodeList<Article>()
-            android.util.Log.d("DataRepo", "Successfully fetched ${list.size} articles")
+            android.util.Log.d("DataRepo", "Fetched ${list.size} articles for categories: $interests")
+            
+            // FALLBACK: If list is empty, try fetching ANY articles to see if DB is even working
+            if (list.isEmpty() && page == 0) {
+                android.util.Log.d("DataRepo", "Filtered list empty. Trying fallback fetch for ANY articles...")
+                val fallbackResponse = supabase.from("articles")
+                    .select() {
+                        order("published", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+                        limit(5)
+                    }
+                val fallbackList = fallbackResponse.decodeList<Article>()
+                android.util.Log.d("DataRepo", "Fallback fetch returned ${fallbackList.size} items.")
+                return fallbackList
+            }
+
             return list
             
         } catch (e: Exception) {
