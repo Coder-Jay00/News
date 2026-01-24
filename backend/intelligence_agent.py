@@ -2,19 +2,16 @@ import google.generativeai as genai
 import os
 import json
 from typing import Dict
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class IntelligenceAgent:
     def __init__(self):
         api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            print("WARNING: GEMINI_API_KEY not found in environment!")
+        if not api_key or "YOUR_" in api_key:
+            print("ERROR: GEMINI_API_KEY is missing or contains a placeholder!")
         else:
             genai.configure(api_key=api_key)
-            # Use a stable alias or newer model
             self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            print("Intelligence Agent initialized.")
 
     def analyze_article(self, article: Dict) -> Dict:
         """

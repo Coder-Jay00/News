@@ -2,8 +2,13 @@ from ingestion_engine import IngestionEngine
 from intelligence_agent import IntelligenceAgent
 from database_manager import DatabaseManager
 from push_notifier import send_news_notification
+from dotenv import load_dotenv
 import time
 import json
+import os
+
+# 1. Load Environment Variables (Only for local dev)
+load_dotenv()
 
 def main():
     print("=== STARTING DAILY BRIEF PIPELINE ===")
