@@ -24,36 +24,45 @@ class IngestionEngine:
         }
 
     def fetch_rss_feed(self, url: str, category: str) -> List[Dict]:
-        """Fetches and normalizes RSS feed data."""
-        from dateutil import parser # Robust date parsing
+        """Fetches and normalizes RSS feed data using robust requests."""
+        from dateutil import parser 
+        import requests # Using requests for better header control
         
         print(f"Fetching RSS: {url}...")
-        feed = feedparser.parse(url)
-        articles = []
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         
-        for entry in feed.entries[:10]: # Limit to top 10 per feed to avoid noise
-            # Normalize published date to UTC
-            raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
-            try:
-                # Force UTC normalization
-                dt = parser.parse(raw_date)
-                if not dt.tzinfo:
-                    dt = dt.replace(tzinfo=datetime.timezone.utc)
-                iso_date = dt.astimezone(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-            except:
-                iso_date = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            feed = feedparser.parse(response.content)
+            articles = []
+            
+            for entry in feed.entries[:10]:
+                raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
+                try:
+                    dt = parser.parse(raw_date)
+                    if not dt.tzinfo:
+                        dt = dt.replace(tzinfo=datetime.timezone.utc)
+                    iso_date = dt.astimezone(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+                except:
+                    iso_date = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            articles.append({
-                "title": entry.title,
-                "link": entry.link,
-                "published": iso_date,
-                "summary": entry.get("summary", ""),
-                "source": entry.source.get("title", "Unknown") if hasattr(entry, "source") else "Google News",
-                "category": category,
-                "tier": 2, # Tier 2 = Broad RSS
-                "trust_badge": "Unverified" # Default until Gemini checks it
-            })
-        return articles
+                articles.append({
+                    "title": entry.title,
+                    "link": entry.link,
+                    "published": iso_date,
+                    "summary": entry.get("summary", ""),
+                    "source": entry.source.get("title", "Google News") if hasattr(entry, "source") else "Google News",
+                    "category": category,
+                    "tier": 2,
+                    "trust_badge": "Unverified"
+                })
+            print(f"  Success: Found {len(articles)} entries.")
+            return articles
+        except Exception as e:
+            print(f"  Error fetching {url}: {e}")
+            return []
 
     def fetch_newsdata(self) -> List[Dict]:
         """Tier 1: High Quality API (NewsData.io)."""
