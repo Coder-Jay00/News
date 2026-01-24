@@ -30,7 +30,17 @@ def main():
     # 2. Ingest Data (Tier 2 RSS for now)
     print("\n--- STEP 1: INGESTION ---")
     raw_articles = ingestion.run_tier2_ingestion()
-    print(f"Total Raw Articles: {len(raw_articles)}")
+    
+    # DEDUPLICATE: Prevent "ON CONFLICT DO UPDATE command cannot affect row a second time"
+    unique_articles = []
+    seen_links = set()
+    for art in raw_articles:
+        if art['link'] not in seen_links:
+            unique_articles.append(art)
+            seen_links.add(art['link'])
+    
+    raw_articles = unique_articles
+    print(f"Total Unique Articles: {len(raw_articles)}")
     
     if not raw_articles:
         print("No articles found. Exiting.")

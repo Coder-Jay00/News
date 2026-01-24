@@ -30,30 +30,44 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun getRelativeTime(publishedAt: String): String {
+fun getRelativeTime(publishedAt: String?): String {
     if (publishedAt.isNullOrEmpty()) return ""
+    
+    // Comprehensive list of formats to handle RSS, SQL, and ISO strings
+    val formats = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "EEE, dd MMM yyyy HH:mm:ss Z" // Standard RSS format fallback
+    )
+    
     return try {
-        // More comprehensive list of formats to handle different RSS/Supabase flavors
-        val formats = listOf(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd"
-        )
+        val input = publishedAt.trim()
         
-        val cleanDate = publishedAt
-            .replace("Z", "")
-            .split("+")[0]
-            .trim()
-
         var date: Date? = null
         for (format in formats) {
             try {
                 val sdf = SimpleDateFormat(format, Locale.US)
-                sdf.timeZone = TimeZone.getTimeZone("UTC")
-                date = sdf.parse(cleanDate)
+                if (format.contains("'Z'") || format.contains("Z")) {
+                    sdf.timeZone = TimeZone.getTimeZone("UTC")
+                } else if (format.contains("'T'")) {
+                    sdf.timeZone = TimeZone.getTimeZone("UTC")
+                }
+                date = sdf.parse(input)
                 if (date != null) break
             } catch (e: Exception) { continue }
+        }
+
+        if (date == null) {
+            try {
+                val clean = input.replace("Z", "").split("+")[0].split(" ").joinToString("T")
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                date = sdf.parse(clean)
+            } catch (e: Exception) { null }
         }
 
         if (date == null) return ""
