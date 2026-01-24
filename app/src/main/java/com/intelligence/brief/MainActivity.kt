@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,9 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import com.intelligence.brief.ui.theme.BriefTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -29,13 +30,22 @@ class MainActivity : ComponentActivity() {
         repository = DataRepository(this)
 
         setContent {
-            // Use Material 3 Default Theme (Professional, adjusts to system light/dark)
-            MaterialTheme {
+            // Theme state: Read from DataStore or defaults to system
+            var isDarkMode by remember { mutableStateOf<Boolean?>(null) }
+            
+            // Compute effective theme (null = follow system)
+            val useDarkTheme = isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
+            
+            BriefTheme(darkTheme = useDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigator(repository)
+                    AppNavigator(
+                        repository = repository,
+                        isDarkMode = isDarkMode,
+                        onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true }
+                    )
                 }
             }
         }
@@ -53,11 +63,15 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigator(repository: DataRepository) {
+fun AppNavigator(
+    repository: DataRepository,
+    isDarkMode: Boolean?,
+    onToggleTheme: () -> Unit
+) {
     var isOnboarded by remember { mutableStateOf(repository.isOnboarded()) }
 
     if (isOnboarded) {
-        FeedScreen(repository)
+        FeedScreen(repository, isDarkMode, onToggleTheme)
     } else {
         OnboardingScreen { interests ->
             repository.saveInterests(interests)
@@ -68,7 +82,11 @@ fun AppNavigator(repository: DataRepository) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen(repository: DataRepository) {
+fun FeedScreen(
+    repository: DataRepository,
+    isDarkMode: Boolean?,
+    onToggleTheme: () -> Unit
+) {
     var articles by remember { mutableStateOf<List<Article>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
@@ -86,6 +104,15 @@ fun FeedScreen(repository: DataRepository) {
                         fontWeight = FontWeight.Bold
                     ) 
                 },
+                actions = {
+                    // Theme Toggle Button (emoji-based for simplicity)
+                    IconButton(onClick = onToggleTheme) {
+                        Text(
+                            text = if (isDarkMode == true) "☀️" else "🌙",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
@@ -95,7 +122,7 @@ fun FeedScreen(repository: DataRepository) {
     ) { padding ->
         if (articles.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             LazyColumn(
@@ -117,15 +144,15 @@ fun NewsCard(article: Article) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { uriHandler.openUri(article.link) } // Click to Open
+            .clickable { uriHandler.openUri(article.link) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Source • Time
+            // Header: Source • Category
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = article.source,
@@ -134,15 +161,14 @@ fun NewsCard(article: Article) {
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                // Clean up time display if possible, or leave as placeholder
                 Text(
                     text = "• ${article.category}", 
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             
             // Title
             Text(
@@ -150,7 +176,8 @@ fun NewsCard(article: Article) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 3,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -164,11 +191,11 @@ fun NewsCard(article: Article) {
                 overflow = TextOverflow.Ellipsis
             )
             
-            // Trust Badge / Tier (Visual only)
+            // Trust Badge
             if (article.trust_badge.isNotEmpty() && article.trust_badge != "Unverified" && article.trust_badge != "News") {
                  Spacer(modifier = Modifier.height(12.dp))
                  SuggestionChip(
-                    onClick = { uriHandler.openUri(article.link) }, // Button also opens link
+                    onClick = { uriHandler.openUri(article.link) },
                     label = { Text(article.trust_badge) },
                     colors = SuggestionChipDefaults.suggestionChipColors(
                         labelColor = MaterialTheme.colorScheme.secondary
@@ -189,11 +216,11 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
     )
     
     // Auto-detect Country
-    val currentCountry = java.util.Locale.getDefault().country // "IN", "US", etc.
+    val currentCountry = java.util.Locale.getDefault().country
     val defaultSelection = remember {
         val list = mutableListOf<String>()
         if (currentCountry.equals("IN", ignoreCase = true)) list.add("India News")
-        list.add("World News") // Always ask/include Global
+        list.add("World News")
         mutableStateListOf(*list.toTypedArray())
     }
     
@@ -204,14 +231,20 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Customize your Feed", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Select topics you care about.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+        Text(
+            "Customize your Feed", 
+            style = MaterialTheme.typography.headlineLarge, 
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            "Select topics you care about.", 
+            style = MaterialTheme.typography.bodyLarge, 
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Use a FlowRow or LazyColumn for many items in valid app, 
-        // but for now a simple Column of rows or just wrapping FlowRow if available (experimental).
-        // Sticking to Column with scroll for simplicity in this MVP snippet.
         LazyColumn(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -222,7 +255,11 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
                     selected = isSelected,
                     onClick = { if (isSelected) selected.remove(option) else selected.add(option) },
                     label = { Text(option) },
-                    modifier = Modifier.fillMaxWidth().padding(4.dp)
+                    modifier = Modifier.fillMaxWidth().padding(4.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 )
             }
         }
@@ -230,9 +267,12 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = { onComplete(selected.toSet()) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("Get Started")
+            Text("Get Started", fontWeight = FontWeight.SemiBold)
         }
     }
 }

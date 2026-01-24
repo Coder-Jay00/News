@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brief. | Your Daily News App</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='15' width='50' height='70' rx='4' fill='%233B82F6'/><rect x='28' y='30' width='34' height='8' rx='2' fill='white'/><rect x='28' y='44' width='34' height='4' rx='1' fill='white' opacity='0.7'/><rect x='28' y='52' width='26' height='4' rx='1' fill='white' opacity='0.7'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3B82F6;
+            --primary-light: #60A5FA;
+            --secondary: #06B6D4;
+            --bg-dark: #0F172A;
+            --bg-light: #F8FAFC;
+            --card-dark: #1E293B;
+            --card-light: #FFFFFF;
+            --text-dark: #F1F5F9;
+            --text-light: #1E293B;
+            --text-muted-dark: #94A3B8;
+            --text-muted-light: #64748B;
+        }
+
+        [data-theme="dark"] {
+            --bg: var(--bg-dark);
+            --card-bg: var(--card-dark);
+            --text-main: var(--text-dark);
+            --text-muted: var(--text-muted-dark);
+            --border-color: #334155;
+        }
+
+        [data-theme="light"] {
+            --bg: var(--bg-light);
+            --card-bg: var(--card-light);
+            --text-main: var(--text-light);
+            --text-muted: var(--text-muted-light);
+            --border-color: #E2E8F0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: transform 0.2s, background-color 0.3s;
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 100px 20px 60px;
+            max-width: 800px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Simple Newspaper Icon - No technical jargon */
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .logo-text {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .tagline {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            line-height: 1.2;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        p.lead {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            background-color: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            padding: 40px 20px 80px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 14px;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .logo-text {
+                font-size: 2.2rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .theme-toggle {
+                top: 12px;
+                right: 12px;
+                width: 42px;
+                height: 42px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch theme">
+        <span id="theme-icon">☀️</span>
+    </button>
+
+    <section class="hero">
+        <div class="logo">
+            <!-- Simple Newspaper Icon -->
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="3" width="16" height="18" rx="2" fill="white" />
+                    <rect x="6" y="6" width="12" height="3" rx="1" fill="#3B82F6" />
+                    <rect x="6" y="11" width="12" height="1.5" rx="0.5" fill="#94A3B8" />
+                    <rect x="6" y="14" width="9" height="1.5" rx="0.5" fill="#94A3B8" />
+                    <rect x="6" y="17" width="12" height="1.5" rx="0.5" fill="#94A3B8" />
+                </svg>
+            </div>
+            <span class="logo-text">Brief.</span>
+        </div>
+
+        <span class="tagline">📰 News made simple</span>
+        <h1>Get the news that matters</h1>
+        <p class="lead">
+            No ads. No clickbait. Just clear, short summaries of today's top stories —
+            handpicked just for you.
+        </p>
+
+        <div class="btn-group">
+            <a href="app-debug.apk" download class="btn btn-primary">
+                <span>�</span> Download App
+            </a>
+            <a href="#" class="btn btn-secondary">
+                <span>💻</span> Windows (Coming Soon)
+            </a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="card">
+            <div class="card-icon">✨</div>
+            <h3>Smart Summaries</h3>
+            <p>Long articles turned into quick reads. Get the main points without the fluff.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🌍</div>
+            <h3>Stay Updated</h3>
+            <p>From local news to world events — pick what interests you and we'll keep you informed.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">�</div>
+            <h3>Your Privacy, Protected</h3>
+            <p>No tracking. No targeted ads. Read in peace without anyone watching.</p>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 Brief. | Made with ❤️ | <a href="https://github.com" target="_blank">Open Source</a>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                icon.textContent = '🌙';
+            } else {
+                body.dataset.theme = 'dark';
+                icon.textContent = '☀️';
+            }
+            localStorage.setItem('theme', body.dataset.theme);
+        }
+
+        (function () {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.body.dataset.theme = saved;
+            document.getElementById('theme-icon').textContent = saved === 'dark' ? '☀️' : '🌙';
+        })();
+    </script>
+
+</body>
+
+</html>

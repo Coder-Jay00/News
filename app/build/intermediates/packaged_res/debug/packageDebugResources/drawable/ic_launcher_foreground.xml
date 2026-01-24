@@ -4,7 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Simple Newspaper/Document Icon - Friendly & Recognizable -->
+    
+    <!-- Paper/Document Shape -->
     <path
-        android:fillColor="#00FF41"
-        android:pathData="M30,40 L40,40 L40,70 L30,70 Z M50,40 L80,40 L80,50 L50,50 Z M50,60 L80,60 L80,70 L50,70 Z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,26 L68,26 L78,36 L78,82 L30,82 Z"/>
+    
+    <!-- Folded Corner -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M68,26 L68,36 L78,36 Z"/>
+    
+    <!-- Headline Bar -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M36,42 L72,42 L72,50 L36,50 Z"/>
+    
+    <!-- Text Lines -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M36,56 L72,56 L72,60 L36,60 Z"/>
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M36,64 L62,64 L62,68 L36,68 Z"/>
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M36,72 L72,72 L72,76 L36,76 Z"/>
 </vector>
