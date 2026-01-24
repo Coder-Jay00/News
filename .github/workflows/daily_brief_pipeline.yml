@@ -2,7 +2,7 @@ name: Daily Intelligence Brief
 
 on:
   schedule:
-    - cron: '30 * * * *' # Every hour (aligned to IST: 5:30 -> 6:00 PM)
+    - cron: '0 * * * *' # Every hour on the hour (e.g., 10:00, 11:00)
   workflow_dispatch: # Allow manual trigger
 
 jobs:
