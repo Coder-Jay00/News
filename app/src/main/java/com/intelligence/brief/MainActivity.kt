@@ -1,6 +1,8 @@
 package com.intelligence.brief
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -122,6 +124,17 @@ class MainActivity : ComponentActivity() {
             val updateUrl = updateManager.checkForUpdate()
             if (updateUrl != null) {
                 updateManager.triggerUpdate(updateUrl) 
+            }
+        }
+
+        // Handle incoming URL from notifications (Deep-linking)
+        intent.getStringExtra("url")?.let { url ->
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(browserIntent)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to open deep-link URL: $url", e)
             }
         }
     }
