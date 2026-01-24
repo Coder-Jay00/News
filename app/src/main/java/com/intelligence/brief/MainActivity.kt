@@ -30,13 +30,19 @@ import java.util.*
 
 fun getRelativeTime(publishedAt: String): String {
     return try {
+        // Handle various ISO formats including 'Z' and offsets
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         sdf.timeZone = TimeZone.getTimeZone("UTC")
-        val date = sdf.parse(publishedAt) ?: return ""
+        
+        // Clean the string (remove Z or offset for the basic parser if needed, 
+        // or use a more modern parser if available)
+        val cleanDate = publishedAt.replace("Z", "").substringBefore("+").substringBefore("-")
+        val date = sdf.parse(cleanDate) ?: return ""
+        
         val now = Date()
         val diff = now.time - date.time
         
-        val seconds = diff / 1000
+        val seconds = Math.abs(diff / 1000)
         val minutes = seconds / 60
         val hours = minutes / 60
         val days = hours / 24

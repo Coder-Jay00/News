@@ -32,12 +32,16 @@ class IngestionEngine:
         articles = []
         
         for entry in feed.entries[:10]: # Limit to top 10 per feed to avoid noise
-            # Normalize published date
+            # Normalize published date to UTC
             raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
             try:
-                iso_date = parser.parse(raw_date).isoformat()
+                # Force UTC normalization
+                dt = parser.parse(raw_date)
+                if not dt.tzinfo:
+                    dt = dt.replace(tzinfo=datetime.timezone.utc)
+                iso_date = dt.astimezone(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
             except:
-                iso_date = datetime.datetime.now().isoformat()
+                iso_date = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
             articles.append({
                 "title": entry.title,
