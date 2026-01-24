@@ -38,7 +38,7 @@ class IngestionEngine:
             feed = feedparser.parse(response.content)
             articles = []
             
-            for entry in feed.entries[:10]:
+            for entry in feed.entries[:25]:
                 raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
                 try:
                     dt = parser.parse(raw_date)
