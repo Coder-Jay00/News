@@ -59,8 +59,9 @@ object NotificationHelper {
         if (!hasNotificationPermission(context)) return
         
         val intent = if (!url.isNullOrEmpty()) {
+            android.util.Log.d("NotificationHelper", "Creating browser intent for: $url")
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
         } else {
             Intent(context, MainActivity::class.java).apply {

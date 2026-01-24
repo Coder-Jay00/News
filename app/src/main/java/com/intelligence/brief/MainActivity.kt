@@ -32,13 +32,15 @@ import java.util.*
 
 fun getRelativeTime(publishedAt: String): String {
     if (publishedAt.isNullOrEmpty()) return ""
-    val formats = listOf(
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd"
-    )
-    
     return try {
+        // More comprehensive list of formats to handle different RSS/Supabase flavors
+        val formats = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd"
+        )
+        
         val cleanDate = publishedAt
             .replace("Z", "")
             .split("+")[0]
@@ -417,8 +419,8 @@ fun NewsCard(article: Article) {
             
             // Summary (Prioritize AI Summary only if it succeeded)
             val displaySummary = if (article.aiSummary != null && 
-                !article.aiSummary.contains("Analysis Failed", ignoreCase = true) &&
-                !article.aiSummary.contains("Unavailable", ignoreCase = true)) {
+                !article.aiSummary.lowercase().contains("analysis failed") &&
+                !article.aiSummary.lowercase().contains("unavailable")) {
                 article.aiSummary
             } else {
                 article.summary

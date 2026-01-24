@@ -43,6 +43,7 @@ class BriefFirebaseMessagingService : FirebaseMessagingService() {
             val url = data["url"]
 
             if (type == "update" && url != null) {
+                Log.d(TAG, "Update notification received for version: ${data["version"]} with URL: $url")
                 // Specially handle update notifications with the download URL
                 NotificationHelper.showGenericNotification(this, title, body, url)
                 return
