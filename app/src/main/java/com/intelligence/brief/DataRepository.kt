@@ -6,19 +6,23 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 // Data Models
 @Serializable
 data class Article(
     val id: String = "",
-    val title: String,
-    val summary: String,
-    val source: String,
-    val published: String,
-    val category: String,
-    val trust_badge: String,
-    val icon: String,
-    val link: String,
+    val title: String = "",
+    val summary: String = "",
+    @SerialName("ai_summary")
+    val aiSummary: String? = null,
+    val source: String = "",
+    val published: String = "",
+    val category: String = "",
+    @SerialName("trust_badge")
+    val trustBadge: String = "",
+    val icon: String = "",
+    val link: String = "",
     val tier: Int? = null
 )
 
@@ -54,27 +58,34 @@ class DataRepository(context: Context) {
     // Data Fetching with Pagination - Server Side Filtering & Sorting
     suspend fun fetchArticles(page: Int = 0): List<Article> {
         val interests = getInterests()
-        if (interests.isEmpty()) return emptyList()
+        android.util.Log.d("DataRepo", "Fetching articles for page $page with interests: $interests")
+        
+        if (interests.isEmpty()) {
+            android.util.Log.w("DataRepo", "No interests selected, returning empty list")
+            return emptyList()
+        }
 
         try {
-            // Calculate range for pagination
             val fromIndex = page * PAGE_SIZE
             val toIndex = fromIndex + PAGE_SIZE - 1
 
-            return supabase.from("articles")
+            val response = supabase.from("articles")
                 .select() {
                     filter {
-                        // Efficient Postgrest filtering: 'category' MUST be in the 'interests' list
                         isIn("category", interests.toList())
                     }
-                    // Sort by publication date DESC (Newest First)
                     order("published", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
-                    // Pagination on the server
                     range(fromIndex.toLong(), toIndex.toLong())
                 }
-                .decodeList<Article>()
+            
+            val list = response.decodeList<Article>()
+            android.util.Log.d("DataRepo", "Successfully fetched ${list.size} articles")
+            return list
+            
         } catch (e: Exception) {
-            android.util.Log.e("DataRepo", "Error fetching data from Supabase", e)
+            android.util.Log.e("DataRepo", "FATAL ERROR fetching data: ${e.message}", e)
+            // Print stack trace to see exactly where it fails (likely JSON decoding)
+            e.printStackTrace()
             return emptyList()
         }
     }

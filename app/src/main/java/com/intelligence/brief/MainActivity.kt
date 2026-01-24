@@ -384,9 +384,9 @@ fun NewsCard(article: Article) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Summary (Cleaned)
+            // Summary (Prioritize AI Summary)
             Text(
-                text = HtmlTextMapper.fromHtml(article.summary), 
+                text = HtmlTextMapper.fromHtml(article.aiSummary ?: article.summary), 
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 4,
@@ -394,11 +394,11 @@ fun NewsCard(article: Article) {
             )
             
             // Trust Badge
-            if (article.trust_badge.isNotEmpty() && article.trust_badge != "Unverified" && article.trust_badge != "News") {
+            if (article.trustBadge.isNotEmpty() && article.trustBadge != "Unverified" && article.trustBadge != "News") {
                  Spacer(modifier = Modifier.height(12.dp))
                  SuggestionChip(
                     onClick = { uriHandler.openUri(article.link) },
-                    label = { Text(article.trust_badge) },
+                    label = { Text(article.trustBadge) },
                     colors = SuggestionChipDefaults.suggestionChipColors(
                         labelColor = MaterialTheme.colorScheme.secondary
                     )
