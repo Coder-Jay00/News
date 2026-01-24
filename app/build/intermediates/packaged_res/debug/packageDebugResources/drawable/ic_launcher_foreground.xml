@@ -4,31 +4,30 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Simple Newspaper/Document Icon - Friendly & Recognizable -->
+    <!-- Clean "B" Lettermark Logo -->
     
-    <!-- Paper/Document Shape -->
+    <!-- Bold "B" Letter -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,26 L68,26 L78,36 L78,82 L30,82 Z"/>
-    
-    <!-- Folded Corner -->
-    <path
-        android:fillColor="#E0E0E0"
-        android:pathData="M68,26 L68,36 L78,36 Z"/>
-    
-    <!-- Headline Bar -->
-    <path
-        android:fillColor="#3B82F6"
-        android:pathData="M36,42 L72,42 L72,50 L36,50 Z"/>
-    
-    <!-- Text Lines -->
-    <path
-        android:fillColor="#CBD5E1"
-        android:pathData="M36,56 L72,56 L72,60 L36,60 Z"/>
-    <path
-        android:fillColor="#CBD5E1"
-        android:pathData="M36,64 L62,64 L62,68 L36,68 Z"/>
-    <path
-        android:fillColor="#CBD5E1"
-        android:pathData="M36,72 L72,72 L72,76 L36,76 Z"/>
+        android:pathData="
+            M38,28
+            L52,28
+            C62,28 70,34 70,44
+            C70,50 66,54 60,56
+            C68,58 72,64 72,72
+            C72,82 64,88 52,88
+            L38,88
+            Z
+            M48,36
+            L48,52
+            L52,52
+            C58,52 62,48 62,44
+            C62,40 58,36 52,36
+            Z
+            M48,60
+            L48,80
+            L54,80
+            C62,80 66,76 66,70
+            C66,64 62,60 54,60
+            Z"/>
 </vector>

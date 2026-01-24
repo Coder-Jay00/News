@@ -33,6 +33,10 @@ class DataRepository(context: Context) {
         install(Postgrest)
     }
 
+    companion object {
+        const val PAGE_SIZE = 15
+    }
+
     // Onboarding Logic
     fun isOnboarded(): Boolean = prefs.getBoolean("onboarded", false)
 
@@ -47,24 +51,28 @@ class DataRepository(context: Context) {
         return prefs.getStringSet("interests", setOf("AI & Frontiers", "Cybersecurity")) ?: emptySet()
     }
 
-    // Data Fetching
-    suspend fun fetchDailyBrief(): List<Article> {
+    // Data Fetching with Pagination
+    suspend fun fetchArticles(page: Int = 0): List<Article> {
         val interests = getInterests()
         try {
-            // Filter by interests using Supabase 'in' operator
-            // Note: In real app, we handle timestamps to get only 'today'
-            val articles = supabase.from("articles")
+            val allArticles = supabase.from("articles")
                 .select()
                 .decodeList<Article>()
-                .filter { it.category in interests } // Client-side filter fallback
+                .filter { it.category in interests }
                 .sortedByDescending { it.published }
-                .take(15)
             
-            return articles
+            // Pagination: skip previous pages, take PAGE_SIZE
+            val startIndex = page * PAGE_SIZE
+            if (startIndex >= allArticles.size) return emptyList()
+            
+            return allArticles.drop(startIndex).take(PAGE_SIZE)
         } catch (e: Exception) {
             android.util.Log.e("DataRepo", "Error fetching data", e)
             e.printStackTrace()
             return emptyList()
         }
     }
+
+    // Legacy method for compatibility
+    suspend fun fetchDailyBrief(): List<Article> = fetchArticles(0)
 }

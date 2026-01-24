@@ -92,29 +92,77 @@ fun AppNavigator(
     onToggleTheme: () -> Unit
 ) {
     var isOnboarded by remember { mutableStateOf(repository.isOnboarded()) }
+    var showSettings by remember { mutableStateOf(false) }
 
-    if (isOnboarded) {
-        FeedScreen(repository, isDarkMode, onToggleTheme)
-    } else {
-        OnboardingScreen { interests ->
-            repository.saveInterests(interests)
-            isOnboarded = true
+    when {
+        showSettings -> {
+            SettingsScreen(
+                repository = repository,
+                onBack = { showSettings = false }
+            )
+        }
+        isOnboarded -> {
+            FeedScreen(
+                repository = repository,
+                isDarkMode = isDarkMode,
+                onToggleTheme = onToggleTheme,
+                onOpenSettings = { showSettings = true }
+            )
+        }
+        else -> {
+            OnboardingScreen { interests ->
+                repository.saveInterests(interests)
+                isOnboarded = true
+            }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
     repository: DataRepository,
     isDarkMode: Boolean?,
-    onToggleTheme: () -> Unit
+    onToggleTheme: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     var articles by remember { mutableStateOf<List<Article>>(emptyList()) }
+    var currentPage by remember { mutableIntStateOf(0) }
+    var isLoading by remember { mutableStateOf(false) }
+    var hasMore by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
+    // Initial load
     LaunchedEffect(true) {
-        scope.launch { articles = repository.fetchDailyBrief() }
+        isLoading = true
+        articles = repository.fetchArticles(0)
+        isLoading = false
+        hasMore = articles.size >= DataRepository.PAGE_SIZE
+    }
+
+    // Detect scroll to bottom and load more
+    LaunchedEffect(listState) {
+        snapshotFlow { 
+            val layoutInfo = listState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisibleIndex >= totalItems - 3 // Trigger when 3 items from bottom
+        }.collect { nearBottom ->
+            if (nearBottom && hasMore && !isLoading && articles.isNotEmpty()) {
+                isLoading = true
+                currentPage++
+                val moreArticles = repository.fetchArticles(currentPage)
+                if (moreArticles.isEmpty()) {
+                    hasMore = false
+                } else {
+                    articles = articles + moreArticles
+                    hasMore = moreArticles.size >= DataRepository.PAGE_SIZE
+                }
+                isLoading = false
+            }
+        }
     }
 
     Scaffold(
@@ -128,7 +176,11 @@ fun FeedScreen(
                     ) 
                 },
                 actions = {
-                    // Theme Toggle Button (emoji-based for simplicity)
+                    // Settings Button
+                    IconButton(onClick = onOpenSettings) {
+                        Text("⚙️", style = MaterialTheme.typography.titleLarge)
+                    }
+                    // Theme Toggle Button
                     IconButton(onClick = onToggleTheme) {
                         Text(
                             text = if (isDarkMode == true) "☀️" else "🌙",
@@ -143,12 +195,17 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        if (articles.isEmpty()) {
+        if (articles.isEmpty() && isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
+        } else if (articles.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("No articles found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         } else {
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(16.dp),
                 modifier = Modifier.padding(padding)
             ) {
@@ -156,10 +213,36 @@ fun FeedScreen(
                     NewsCard(article)
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                
+                // Loading indicator at bottom
+                if (isLoading && hasMore) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+                
+                // End of list message
+                if (!hasMore && articles.isNotEmpty()) {
+                    item {
+                        Text(
+                            "You're all caught up! ✓",
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -296,6 +379,89 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
             )
         ) {
             Text("Get Started", fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    repository: DataRepository,
+    onBack: () -> Unit
+) {
+    val allCategories = listOf(
+        "India News", "World News", "Business", "Technology", "Science", "Health", 
+        "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity"
+    )
+    
+    val currentInterests = repository.getInterests()
+    val selected = remember { mutableStateListOf(*currentInterests.toTypedArray()) }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Text("←", style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            Text(
+                "📰 News Categories",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                "Select topics you want to see",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(allCategories) { category ->
+                    val isSelected = selected.contains(category)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { 
+                            if (isSelected) selected.remove(category) 
+                            else selected.add(category) 
+                        },
+                        label = { Text(category) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Button(
+                onClick = {
+                    repository.saveInterests(selected.toSet())
+                    onBack()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Save Changes", fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

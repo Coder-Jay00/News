@@ -12,6 +12,10 @@
         "source": "com.intelligence.brief.app-main-53:/drawable/ic_launcher_foreground.xml"
     },
     {
+        "merged": "com.intelligence.brief.app-debug-51:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.intelligence.brief.app-main-53:/drawable/ic_launcher_background.xml"
+    },
+    {
         "merged": "C:\\Users\\Admin\\.gradle\\daemon\\8.13\\com.intelligence.brief.app-debug-51:\\xml_backup_rules.xml.flat",
         "source": "C:\\Users\\Admin\\.gradle\\daemon\\8.13\\com.intelligence.brief.app-main-53:\\xml\\backup_rules.xml"
     },
