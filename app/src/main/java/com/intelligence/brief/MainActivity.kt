@@ -51,7 +51,7 @@ fun getRelativeTime(publishedAt: String): String {
         val now = Date()
         val diff = now.time - date.time
         
-        val seconds = Math.abs(diff / 1000)
+        val seconds = kotlin.math.abs(diff / 1000)
         val minutes = seconds / 60
         val hours = minutes / 60
         val days = hours / 24
