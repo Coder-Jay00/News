@@ -40,10 +40,11 @@ class UpdateManager(private val context: Context) {
                 // 2. Compare Versions (Simple String Comparison for now)
                 // In production, use a proper SemVer parser
                 if (release.tag_name != currentVersion) {
-                    // Return the download URL (check for .apk first, then .zip)
+                    // Return the download URL (check for APK, then ZIP, then point to Website)
                     val asset = release.assets.find { it.name.endsWith(".apk") } 
                                 ?: release.assets.find { it.name.endsWith(".zip") }
-                    return@withContext asset?.browser_download_url ?: release.html_url
+                    
+                    return@withContext asset?.browser_download_url ?: "https://brief-iota.vercel.app/"
                 }
                 return@withContext null
             } catch (e: Exception) {
