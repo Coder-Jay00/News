@@ -31,25 +31,34 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 fun getRelativeTime(publishedAt: String): String {
-    if (publishedAt.isEmpty()) return ""
+    if (publishedAt.isNullOrEmpty()) return ""
+    val formats = listOf(
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+    
     return try {
-        // Use a format that reliably handles the 'T' separator
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        sdf.timeZone = TimeZone.getTimeZone("UTC") // FORCE UTC globally for this parser
-
-        // Clean the string: remove 'Z' or anything after '+' or ' '
         val cleanDate = publishedAt
             .replace("Z", "")
             .split("+")[0]
-            .split(" ")[0]
             .trim()
 
-        val date = sdf.parse(cleanDate) ?: return ""
+        var date: Date? = null
+        for (format in formats) {
+            try {
+                val sdf = SimpleDateFormat(format, Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                date = sdf.parse(cleanDate)
+                if (date != null) break
+            } catch (e: Exception) { continue }
+        }
+
+        if (date == null) return ""
         
         val now = System.currentTimeMillis()
         val diff = now - date.time
         
-        // If the date is in the future (due to slight clock skew), show "Just now"
         if (diff < 0) return "Just now"
 
         val seconds = diff / 1000
@@ -407,7 +416,9 @@ fun NewsCard(article: Article) {
             Spacer(modifier = Modifier.height(8.dp))
             
             // Summary (Prioritize AI Summary only if it succeeded)
-            val displaySummary = if (article.aiSummary != null && article.aiSummary != "Analysis Failed") {
+            val displaySummary = if (article.aiSummary != null && 
+                !article.aiSummary.contains("Analysis Failed", ignoreCase = true) &&
+                !article.aiSummary.contains("Unavailable", ignoreCase = true)) {
                 article.aiSummary
             } else {
                 article.summary
