@@ -40,9 +40,10 @@ class UpdateManager(private val context: Context) {
                 // 2. Compare Versions (Simple String Comparison for now)
                 // In production, use a proper SemVer parser
                 if (release.tag_name != currentVersion) {
-                    // Return the download URL (first .apk asset)
-                    return@withContext release.assets.find { it.name.endsWith(".apk") }?.browser_download_url 
-                        ?: release.html_url // Fallback to release page
+                    // Return the download URL (check for .apk first, then .zip)
+                    val asset = release.assets.find { it.name.endsWith(".apk") } 
+                                ?: release.assets.find { it.name.endsWith(".zip") }
+                    return@withContext asset?.browser_download_url ?: release.html_url
                 }
                 return@withContext null
             } catch (e: Exception) {
