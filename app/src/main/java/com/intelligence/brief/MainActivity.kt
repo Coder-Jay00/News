@@ -1,8 +1,11 @@
 package com.intelligence.brief
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,16 +27,27 @@ import com.intelligence.brief.ui.theme.BriefTheme
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var repository: DataRepository
+    
+    // Permission request launcher for Android 13+ notifications
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        // Permission result - notifications will work if granted
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         repository = DataRepository(this)
+        
+        // Setup notifications
+        NotificationHelper.createNotificationChannel(this)
+        requestNotificationPermission()
 
         setContent {
-            // Theme state: Read from DataStore or defaults to system
+            // Theme state: null = follow device system theme (default behavior)
             var isDarkMode by remember { mutableStateOf<Boolean?>(null) }
             
-            // Compute effective theme (null = follow system)
+            // Compute effective theme (null = follow system automatically)
             val useDarkTheme = isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
             
             BriefTheme(darkTheme = useDarkTheme) {
@@ -59,6 +73,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!NotificationHelper.hasNotificationPermission(this)) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
