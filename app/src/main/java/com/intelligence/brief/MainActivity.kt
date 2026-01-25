@@ -125,7 +125,6 @@ class MainActivity : ComponentActivity() {
     private val onDownloadComplete = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             if (downloadId == id) {
                 installApk(updateVersionState.value)
             }
@@ -339,8 +338,7 @@ class MainActivity : ComponentActivity() {
             checkForUpdates()
         }
     }
-    }
-    
+
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!NotificationHelper.hasNotificationPermission(this)) {
