@@ -156,8 +156,17 @@ class MainActivity : ComponentActivity() {
         // Setup UpdateManager
         updateManager = UpdateManager(this)
         
-        // Register download receiver
-        registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        // Register download receiver with Android 14+ compatibility
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.registerReceiver(
+                this,
+                onDownloadComplete,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                ContextCompat.RECEIVER_EXPORTED
+            )
+        } else {
+            registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        }
 
         checkForUpdates()
 
@@ -234,10 +243,10 @@ class MainActivity : ComponentActivity() {
 
         if (url.isNullOrEmpty()) return
 
-        // CLEAR the intent to prevent "sticky" behavior on rotation or resume
+        // CLEAR the intent state to prevent "sticky" behavior on rotation or resume
         intent.removeExtra("url")
-        intent.data = null
-        setIntent(Intent()) 
+        try { intent.data = null } catch (e: Exception) {}
+        // DO NOT call setIntent(Intent()) here as it can disrupt some activity lifecycle states
 
         android.util.Log.d("MainActivity", "Processing URL: $url")
         
@@ -470,7 +479,7 @@ fun FeedScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "v1.2.6 Stable",
+                            "v1.2.7 Stable",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )

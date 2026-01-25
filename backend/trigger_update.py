@@ -2,9 +2,9 @@ from push_notifier import send_update_notification
 
 if __name__ == "__main__":
     print("Triggering App Update Notification...")
-    # Sending notification for v1.2.6 (Stabilization Fix)
+    # Sending notification for v1.2.7 (Crash Recovery)
     success = send_update_notification(
-        version="v1.2.6", 
+        version="v1.2.7", 
         download_url="https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
     )
     if success:
