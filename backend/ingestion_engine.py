@@ -8,17 +8,17 @@ class IngestionEngine:
     def __init__(self):
         self.sources = {
             "tier2_rss": [
-                # --- GENERAL NEWS (Extreme Freshness: 1h) ---
-                {"url": "https://news.google.com/rss/search?q=world+news+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "World News"},
-                {"url": "https://news.google.com/rss/search?q=business+finance+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Business"},
-                {"url": "https://news.google.com/rss/search?q=India+breaking+news+when:1h&hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
-                {"url": "https://news.google.com/rss/search?q=technology+innovation+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Technology"},
-                {"url": "https://news.google.com/rss/search?q=science+research+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Science"},
-                {"url": "https://news.google.com/rss/search?q=health+medical+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Health"},
+                # --- GENERAL NEWS (Enhanced Freshness: 2h) ---
+                {"url": "https://news.google.com/rss/search?q=world+news+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "World News"},
+                {"url": "https://news.google.com/rss/search?q=business+finance+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "Business"},
+                {"url": "https://news.google.com/rss/search?q=India+breaking+news+when:2h&hl=en-IN&gl=IN&ceid=IN:en", "category": "India News"},
+                {"url": "https://news.google.com/rss/search?q=technology+innovation+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "Technology"},
+                {"url": "https://news.google.com/rss/search?q=science+research+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "Science"},
+                {"url": "https://news.google.com/rss/search?q=health+medical+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "Health"},
                 
                 # --- NICHE ---
-                {"url": "https://news.google.com/rss/search?q=AI+LLM+OR+Nvidia+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
-                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+hacker+when:1h&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
+                {"url": "https://news.google.com/rss/search?q=AI+LLM+OR+Nvidia+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "AI & Frontiers"},
+                {"url": "https://news.google.com/rss/search?q=cybersecurity+breach+OR+hacker+when:2h&hl=en-US&gl=US&ceid=US:en", "category": "Cybersecurity"},
             ]
         }
 
