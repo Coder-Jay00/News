@@ -2,10 +2,10 @@ from push_notifier import send_update_notification
 
 if __name__ == "__main__":
     print("Triggering App Update Notification...")
-    # Sending notification for v1.0.1 pointing to the web mirror
+    # Sending notification for v1.2.4 (Definitive Fix)
     success = send_update_notification(
-        version="v1.0.1", 
-        download_url="https://brief-iota.vercel.app/Brief.apk"
+        version="v1.2.4", 
+        download_url="https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
     )
     if success:
         print("✅ Success: Update notification broadcast to all users.")
