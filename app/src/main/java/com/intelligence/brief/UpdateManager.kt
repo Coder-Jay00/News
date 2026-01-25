@@ -30,7 +30,7 @@ data class GitHubAsset(
 class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
-    private val currentVersion = "v1.2.5" 
+    private val currentVersion = "v1.2.6" 
     private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
     suspend fun checkForUpdate(): String? {
@@ -57,12 +57,16 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    fun triggerUpdate(url: String): Long {
+    fun triggerUpdate(url: String, version: String = "latest"): Long {
+        // Clean up any old update files first to prevent confusion
+        deleteOldUpdates()
+        
+        val fileName = "brief_update_${version.replace(".", "_")}.apk"
         val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle("Brief. Update")
+            .setTitle("Brief. Update ($version)")
             .setDescription("Downloading latest version...")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, "brief_update.apk")
+            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
 
@@ -70,20 +74,36 @@ class UpdateManager(private val context: Context) {
         return downloadManager.enqueue(request)
     }
 
-    fun getDownloadedFileUri(downloadId: Long): Uri? {
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "brief_update.apk")
+    fun getDownloadedFileUri(version: String = "latest"): Uri? {
+        val fileName = "brief_update_${version.replace(".", "_")}.apk"
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
         return if (file.exists()) Uri.fromFile(file) else null
     }
 
-    fun isUpdateDownloaded(): Boolean {
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "brief_update.apk")
-        return file.exists() && file.length() > 1024 * 1024 // Greater than 1MB to be a real APK
+    fun isUpdateDownloaded(version: String = "latest"): Boolean {
+        val fileName = "brief_update_${version.replace(".", "_")}.apk"
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+        return file.exists() && file.length() > 1024 * 1024
     }
 
-    fun deleteUpdateFile() {
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "brief_update.apk")
+    fun deleteUpdateFile(version: String = "latest") {
+        val fileName = "brief_update_${version.replace(".", "_")}.apk"
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
         if (file.exists()) {
             file.delete()
+        }
+    }
+
+    fun deleteOldUpdates() {
+        try {
+            val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            dir?.listFiles()?.forEach { file ->
+                if (file.name.startsWith("brief_update") && file.name.endsWith(".apk")) {
+                    file.delete()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

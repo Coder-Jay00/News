@@ -119,13 +119,15 @@ class MainActivity : ComponentActivity() {
     
     // Update UI State
     private var updateUrlState = mutableStateOf<String?>(null)
+    private var updateVersionState = mutableStateOf<String>("latest")
     private var showUpdateDialogState = mutableStateOf(false)
 
     private val onDownloadComplete = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             if (downloadId == id) {
-                installApk()
+                installApk(updateVersionState.value)
             }
         }
     }
@@ -184,19 +186,20 @@ class MainActivity : ComponentActivity() {
                         
                         // Compose-based Update Dialog
                         if (showUpdateDialog && updateUrl != null) {
-                            val alreadyDownloaded = updateManager.isUpdateDownloaded()
+                            val targetVersion = updateVersionState.value
+                            val alreadyDownloaded = updateManager.isUpdateDownloaded(targetVersion)
                             
                             AlertDialog(
                                 onDismissRequest = { showUpdateDialogState.value = false },
                                 title = { Text("Update Available") },
-                                text = { Text("A new version of Brief. is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?") },
+                                text = { Text("A new version of Brief. ($targetVersion) is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?") },
                                 confirmButton = {
                                     Button(onClick = {
                                         if (alreadyDownloaded) {
-                                            installApk()
+                                            installApk(targetVersion)
                                         } else {
-                                            downloadId = updateManager.triggerUpdate(updateUrl!!)
-                                            android.widget.Toast.makeText(this@MainActivity, "Downloading in background...", android.widget.Toast.LENGTH_SHORT).show()
+                                            downloadId = updateManager.triggerUpdate(updateUrl!!, targetVersion)
+                                            android.widget.Toast.makeText(this@MainActivity, "Downloading $targetVersion in background...", android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                         showUpdateDialogState.value = false
                                     }) {
@@ -246,6 +249,13 @@ class MainActivity : ComponentActivity() {
                          cleanUrl.contains("brief")
                          
         if (isUpdateUrl) {
+            // Extract version from URL if possible (e.g. from GitHub tag)
+            val extractedVersion = if (url.contains("/v")) {
+                url.substringAfterLast("/v").substringBefore("/")
+            } else {
+                "latest"
+            }
+            
             // Normalize to a direct APK link if it's just the homepage or a release page
             val finalUrl = if (!cleanUrl.endsWith(".apk")) {
                 "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
@@ -253,6 +263,7 @@ class MainActivity : ComponentActivity() {
                 url // Keep original case for actual download
             }
             
+            updateVersionState.value = extractedVersion
             updateUrlState.value = finalUrl
             showUpdateDialogState.value = true
         } else {
@@ -271,16 +282,26 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val updateUrl = updateManager.checkForUpdate()
             if (updateUrl != null) {
+                // For auto-check, we don't know the exact version yet, but we'll try to get it from the URL
+                val version = if (updateUrl.contains("/download/v")) {
+                    updateUrl.substringAfter("/download/v").substringBefore("/")
+                } else if (updateUrl.contains("/tags/v")) {
+                    updateUrl.substringAfter("/tags/v").substringBefore("/")
+                } else {
+                    "v1.2.6" // Default to current intended version if check fails
+                }
+                
+                updateVersionState.value = version
                 updateUrlState.value = updateUrl
                 showUpdateDialogState.value = true
             } else {
-                updateManager.deleteUpdateFile()
+                updateManager.deleteOldUpdates()
             }
         }
     }
 
-    private fun installApk() {
-        val uri = updateManager.getDownloadedFileUri(downloadId)
+    private fun installApk(version: String = "latest") {
+        val uri = updateManager.getDownloadedFileUri(version)
         if (uri != null) {
             val file = File(uri.path!!)
             try {
@@ -310,10 +331,12 @@ class MainActivity : ComponentActivity() {
                 startActivity(installIntent)
             } catch (e: Exception) {
                 android.util.Log.e("MainActivity", "Installation failed", e)
-                // Fallback: Open in browser if internal install fails
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://brief-iota.vercel.app/"))
-                startActivity(intent)
+                android.widget.Toast.makeText(this, "Installation failed. Please try manual install from downloads.", android.widget.Toast.LENGTH_LONG).show()
+                // REMOVED browser redirect fallback to prevent redirection loop
             }
+        } else {
+            android.widget.Toast.makeText(this, "Update file not found. Re-downloading...", android.widget.Toast.LENGTH_SHORT).show()
+            checkForUpdates()
         }
     }
     }
@@ -449,7 +472,7 @@ fun FeedScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "v1.2.5 Stable",
+                            "v1.2.6 Stable",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
