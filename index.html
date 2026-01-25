@@ -346,10 +346,11 @@
     </section>
 
     <footer>
-        &copy; 2026 Brief. | <a href="https://github.com" style="color: inherit; text-decoration: none;">GitHub</a>
+        <span id="copyright"></span> Brief. &bull; Summarizing the world, one story at a time.
     </footer>
 
     <script>
+        document.getElementById('copyright').innerHTML = '&copy; ' + new Date().getFullYear();
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
 
