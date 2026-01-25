@@ -1,8 +1,10 @@
 package com.intelligence.brief
 
+import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -10,6 +12,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Serializable
 data class GitHubRelease(
@@ -27,7 +30,7 @@ data class GitHubAsset(
 class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
-    private val currentVersion = "v1.1.0" 
+    private val currentVersion = "v1.2.0" 
     private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
     suspend fun checkForUpdate(): String? {
@@ -54,9 +57,31 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    fun triggerUpdate(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
+    fun triggerUpdate(url: String): Long {
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setTitle("Brief. Update")
+            .setDescription("Downloading latest version...")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, "brief_update.apk")
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
+
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        return downloadManager.enqueue(request)
+    }
+
+    fun getDownloadedFileUri(downloadId: Long): Uri? {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        val cursor = downloadManager.query(query)
+        if (cursor.moveToFirst()) {
+            val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+            if (cursor.getInt(statusIndex) == DownloadManager.STATUS_SUCCESSFUL) {
+                val fileUriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+                return Uri.parse(fileUriString)
+            }
+        }
+        cursor.close()
+        return null
     }
 }

@@ -1,3 +1,4 @@
+com.intelligence.brief:xml/file_paths = 0x7f0e0002
 com.intelligence.brief:xml/backup_rules = 0x7f0e0000
 com.intelligence.brief:styleable/Capability = 0x7f0d0003
 com.intelligence.brief:styleable/AnimatedStateListDrawableItem = 0x7f0d0001
@@ -10,7 +11,7 @@ com.intelligence.brief:style/FloatingDialogWindowTheme = 0x7f0c0002
 com.intelligence.brief:string/tooltip_description = 0x7f0b0070
 com.intelligence.brief:string/template_percent = 0x7f0b006f
 com.intelligence.brief:string/tab = 0x7f0b006e
-com.intelligence.brief:xml/image_share_filepaths = 0x7f0e0002
+com.intelligence.brief:xml/image_share_filepaths = 0x7f0e0003
 com.intelligence.brief:style/TextAppearance.Compat.Notification.Info = 0x7f0c0004
 com.intelligence.brief:string/status_bar_notification_info_overflow = 0x7f0b006c
 com.intelligence.brief:string/range_start = 0x7f0b006a

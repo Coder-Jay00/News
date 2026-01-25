@@ -1,7 +1,12 @@
 package com.intelligence.brief
 
 import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -28,7 +33,12 @@ import com.intelligence.brief.ui.theme.BriefTheme
 import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import java.text.SimpleDateFormat
+import java.util.TimeZone
+import java.util.Locale
 import java.util.*
+import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
+import java.io.File
 
 fun getRelativeTime(publishedAt: String?): String {
     if (publishedAt.isNullOrEmpty()) return ""
@@ -104,6 +114,18 @@ class MainActivity : ComponentActivity() {
         // Permission result - notifications will work if granted
     }
 
+    private var downloadId: Long = -1
+    private lateinit var updateManager: UpdateManager
+
+    private val onDownloadComplete = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (downloadId == id) {
+                installApk()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         repository = DataRepository(this)
@@ -123,6 +145,14 @@ class MainActivity : ComponentActivity() {
         
         // Background sync (as fallback)
         NewsSyncWorker.schedule(this)
+
+        // Setup UpdateManager
+        updateManager = UpdateManager(this)
+        
+        // Register download receiver
+        registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+
+        checkForUpdates()
 
 
         setContent {
@@ -146,25 +176,70 @@ class MainActivity : ComponentActivity() {
             }
         }
         
-        // Check for Updates
-        val updateManager = UpdateManager(this)
+        // Handle incoming URL from notifications (Deep-linking)
+        handleDeepLink(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(onDownloadComplete)
+        } catch (e: Exception) {
+            // Already unregistered or not registered
+        }
+    }
+
+    private fun handleDeepLink(intent: Intent) {
+        intent.getStringExtra("url")?.let { url ->
+            if (url.endsWith(".apk")) {
+                // If it's an APK URL, trigger in-app download instead of browser
+                updateManager.triggerUpdate(url)
+            } else {
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(browserIntent)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to open deep-link URL: $url", e)
+                }
+            }
+        }
+    }
+
+    private fun checkForUpdates() {
         lifecycleScope.launch {
             val updateUrl = updateManager.checkForUpdate()
             if (updateUrl != null) {
-                updateManager.triggerUpdate(updateUrl) 
+                downloadId = updateManager.triggerUpdate(updateUrl) 
             }
         }
+    }
 
-        // Handle incoming URL from notifications (Deep-linking)
-        intent.getStringExtra("url")?.let { url ->
+    private fun installApk() {
+        val uri = updateManager.getDownloadedFileUri(downloadId)
+        if (uri != null) {
             try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(browserIntent)
+                // For Android 7.0+ we MUST use FileProvider
+                val contentUri = FileProvider.getUriForFile(
+                    this,
+                    "$packageName.fileprovider",
+                    File(uri.path!!)
+                )
+                
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    setDataAndType(contentUri, "application/vnd.android.package-archive")
+                }
+                startActivity(installIntent)
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to open deep-link URL: $url", e)
+                android.util.Log.e("MainActivity", "Installation failed", e)
+                // Fallback: Open in browser if internal install fails
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://brief-iota.vercel.app/"))
+                startActivity(intent)
             }
         }
+    }
     }
     
     private fun requestNotificationPermission() {
