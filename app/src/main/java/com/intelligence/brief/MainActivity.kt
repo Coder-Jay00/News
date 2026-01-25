@@ -198,8 +198,8 @@ class MainActivity : ComponentActivity() {
     private fun handleDeepLink(intent: Intent) {
         intent.getStringExtra("url")?.let { url ->
             if (url.endsWith(".apk")) {
-                // If it's an APK URL, trigger in-app download instead of browser
-                updateManager.triggerUpdate(url)
+                // If it's an APK URL, show update dialog instead of auto-downloading or browser
+                showUpdateDialog(url)
             } else {
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -216,9 +216,33 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val updateUrl = updateManager.checkForUpdate()
             if (updateUrl != null) {
-                downloadId = updateManager.triggerUpdate(updateUrl) 
+                showUpdateDialog(updateUrl)
+            } else {
+                // If no update is pending, clean up any old update files
+                updateManager.deleteUpdateFile()
             }
         }
+    }
+
+    private fun showUpdateDialog(url: String) {
+        val alreadyDownloaded = updateManager.isUpdateDownloaded()
+        val buttonText = if (alreadyDownloaded) "Install" else "Download"
+        
+        android.widget.Toast.makeText(this, "A new update for Brief. is available!", android.widget.Toast.LENGTH_LONG).show()
+        
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Update Available")
+            .setMessage("A new version of Brief. is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?")
+            .setPositiveButton(buttonText) { _, _ ->
+                if (alreadyDownloaded) {
+                    installApk()
+                } else {
+                    downloadId = updateManager.triggerUpdate(url)
+                    android.widget.Toast.makeText(this, "Downloading update in background...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Later", null)
+            .show()
     }
 
     private fun installApk() {
