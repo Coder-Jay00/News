@@ -116,6 +116,10 @@ class MainActivity : ComponentActivity() {
 
     private var downloadId: Long = -1
     private lateinit var updateManager: UpdateManager
+    
+    // Update UI State
+    private var updateUrlState = mutableStateOf<String?>(null)
+    private var showUpdateDialogState = mutableStateOf(false)
 
     private val onDownloadComplete = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -160,6 +164,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Theme state: null = follow device system theme (default behavior)
             var isDarkMode by remember { mutableStateOf<Boolean?>(null) }
+            val showUpdateDialog by remember { showUpdateDialogState }
+            val updateUrl by remember { updateUrlState }
             
             // Compute effective theme (null = follow system automatically)
             val useDarkTheme = isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -169,61 +175,88 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigator(
-                        repository = repository,
-                        isDarkMode = isDarkMode,
-                        onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true }
-                    )
+                    Box {
+                        AppNavigator(
+                            repository = repository,
+                            isDarkMode = isDarkMode,
+                            onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true }
+                        )
+                        
+                        // Compose-based Update Dialog
+                        if (showUpdateDialog && updateUrl != null) {
+                            val alreadyDownloaded = updateManager.isUpdateDownloaded()
+                            
+                            AlertDialog(
+                                onDismissRequest = { showUpdateDialogState.value = false },
+                                title = { Text("Update Available") },
+                                text = { Text("A new version of Brief. is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?") },
+                                confirmButton = {
+                                    Button(onClick = {
+                                        if (alreadyDownloaded) {
+                                            installApk()
+                                        } else {
+                                            downloadId = updateManager.triggerUpdate(updateUrl!!)
+                                            android.widget.Toast.makeText(this@MainActivity, "Downloading in background...", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                        showUpdateDialogState.value = false
+                                    }) {
+                                        Text(if (alreadyDownloaded) "Install" else "Download")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showUpdateDialogState.value = false }) {
+                                        Text("Later")
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
         
-        // Handle incoming URL from notifications (Deep-linking)
-        handleDeepLink(intent)
+        // Handle incoming intent
+        handleIntent(intent)
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleDeepLink(intent)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        try {
-            unregisterReceiver(onDownloadComplete)
-        } catch (e: Exception) {
-            // Already unregistered or not registered
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+        
+        // 1. Prioritize Extras (from NotificationHelper)
+        var url = intent.getStringExtra("url")
+        
+        // 2. Fallback to Data URI (from system browser/other apps)
+        if (url == null) {
+            url = intent.dataString
         }
-    }
 
-    private fun handleDeepLink(intent: Intent) {
-        val url = intent.getStringExtra("url")
-        if (url == null) return
-        
-        // CLEAR the extra so it doesn't fire again if the activity is re-created
+        if (url.isNullOrEmpty()) return
+
+        // CLEAR the intent to prevent "sticky" behavior on rotation or resume
         intent.removeExtra("url")
-        android.util.Log.d("MainActivity", "handleDeepLink URL found: $url")
+        intent.data = null
+        setIntent(Intent()) 
+
+        android.util.Log.d("MainActivity", "Processing URL: $url")
         
-        // Bulletproof check for update-related domains
-        val isUpdateUrl = url.endsWith(".apk") || 
-                         url.contains("github.com") || 
-                         url.contains("vercel.app") || 
-                         url.contains("brief")
+        val cleanUrl = url.trim().lowercase()
+        val isUpdateUrl = cleanUrl.endsWith(".apk") || 
+                         cleanUrl.contains("github.com") || 
+                         cleanUrl.contains("vercel.app") || 
+                         cleanUrl.contains("brief")
                          
         if (isUpdateUrl) {
-            android.util.Log.d("MainActivity", "Intercepted UPDATE URL: $url")
-            android.widget.Toast.makeText(this, "📦 Processing In-App Update...", android.widget.Toast.LENGTH_SHORT).show()
-            
             // Normalize to a direct APK link if it's just the homepage or a release page
-            val finalUrl = if (!url.endsWith(".apk")) {
+            val finalUrl = if (!cleanUrl.endsWith(".apk")) {
                 "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
             } else {
-                url
+                url // Keep original case for actual download
             }
-            showUpdateDialog(finalUrl)
+            
+            updateUrlState.value = finalUrl
+            showUpdateDialogState.value = true
         } else {
-            android.util.Log.d("MainActivity", "Non-update URL. Forwarding to browser.")
+            // Normal browsing - ONLY redirect if it's NOT a project link we should have handled
             try {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -238,33 +271,12 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val updateUrl = updateManager.checkForUpdate()
             if (updateUrl != null) {
-                showUpdateDialog(updateUrl)
+                updateUrlState.value = updateUrl
+                showUpdateDialogState.value = true
             } else {
-                // If no update is pending, clean up any old update files
                 updateManager.deleteUpdateFile()
             }
         }
-    }
-
-    private fun showUpdateDialog(url: String) {
-        val alreadyDownloaded = updateManager.isUpdateDownloaded()
-        val buttonText = if (alreadyDownloaded) "Install" else "Download"
-        
-        android.widget.Toast.makeText(this, "A new update for Brief. is available!", android.widget.Toast.LENGTH_LONG).show()
-        
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Update Available")
-            .setMessage("A new version of Brief. is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?")
-            .setPositiveButton(buttonText) { _, _ ->
-                if (alreadyDownloaded) {
-                    installApk()
-                } else {
-                    downloadId = updateManager.triggerUpdate(url)
-                    android.widget.Toast.makeText(this, "Downloading update in background...", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Later", null)
-            .show()
     }
 
     private fun installApk() {
@@ -314,6 +326,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(onDownloadComplete)
+        } catch (e: Exception) {
+            // Already unregistered or not registered
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -423,7 +449,7 @@ fun FeedScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "v1.2.4 Stable",
+                            "v1.2.5 Stable",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
