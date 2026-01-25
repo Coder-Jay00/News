@@ -58,28 +58,19 @@ object NotificationHelper {
     fun showGenericNotification(context: Context, title: String, body: String, url: String? = null) {
         if (!hasNotificationPermission(context)) return
         
-        val intent = if (!url.isNullOrEmpty()) {
-            android.util.Log.d("NotificationHelper", "Creating browser intent for: $url")
-            Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-        } else {
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (!url.isNullOrEmpty()) {
+                putExtra("url", url)
             }
         }
         
-        val pendingIntent = if (!url.isNullOrEmpty()) {
-            PendingIntent.getActivity(
-                context, System.currentTimeMillis().toInt(), intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        } else {
-            PendingIntent.getActivity(
-                context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 
+            if (url != null) System.currentTimeMillis().toInt() else 0, 
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
