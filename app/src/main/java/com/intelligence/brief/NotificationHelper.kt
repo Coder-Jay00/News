@@ -20,21 +20,27 @@ import java.util.Locale
  */
 object NotificationHelper {
     
-    private const val CHANNEL_ID = "brief_news_channel"
-    private const val CHANNEL_NAME = "News Alerts"
-    private const val CHANNEL_DESC = "Get notified when new stories arrive"
+    private const val NEWS_CHANNEL_ID = "brief_news_channel"
+    private const val UPDATE_CHANNEL_ID = "brief_updates_channel"
     
     /**
-     * Create notification channel (required for Android 8+)
+     * Create notification channels (required for Android 8+)
      */
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESC
-            }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            
+            // News Channel
+            val newsChannel = NotificationChannel(NEWS_CHANNEL_ID, "News Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Get notified when new stories arrive"
+            }
+            notificationManager.createNotificationChannel(newsChannel)
+            
+            // Updates Channel
+            val updateChannel = NotificationChannel(UPDATE_CHANNEL_ID, "App Updates", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Important alerts about new app versions"
+            }
+            notificationManager.createNotificationChannel(updateChannel)
         }
     }
     
@@ -55,7 +61,7 @@ object NotificationHelper {
     /**
      * Show a generic notification with a custom title and optional URL
      */
-    fun showGenericNotification(context: Context, title: String, body: String, url: String? = null) {
+    fun showGenericNotification(context: Context, title: String, body: String, url: String? = null, isUpdate: Boolean = false) {
         if (!hasNotificationPermission(context)) return
         
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -72,8 +78,10 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+        val channelId = if (isUpdate) UPDATE_CHANNEL_ID else NEWS_CHANNEL_ID
+        
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(if (isUpdate) android.R.drawable.stat_sys_download_done else android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

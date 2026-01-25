@@ -92,7 +92,7 @@ def subscribe_token_to_news(fcm_token: str):
     except Exception as e:
         print(f"[FCM] Topic subscription failed: {e}")
         return False
-def send_update_notification(version: str, download_url: str = "https://brief-iota.vercel.app/"):
+def send_update_notification(version: str, download_url: str = "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"):
     """
     Send a push notification informing users of a new app version.
     """

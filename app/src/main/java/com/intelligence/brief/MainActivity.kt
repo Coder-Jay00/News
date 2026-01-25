@@ -197,9 +197,15 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLink(intent: Intent) {
         intent.getStringExtra("url")?.let { url ->
-            if (url.endsWith(".apk")) {
-                // If it's an APK URL, show update dialog instead of auto-downloading or browser
-                showUpdateDialog(url)
+            if (url.endsWith(".apk") || url.contains("vercel.app")) {
+                // If it's an APK URL or the Vercel app link, trigger in-app download instead of browser
+                // Ensure we use the direct APK link if it's the Vercel homepage
+                val finalUrl = if (url.contains("vercel.app") && !url.endsWith(".apk")) {
+                    "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
+                } else {
+                    url
+                }
+                showUpdateDialog(finalUrl)
             } else {
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))

@@ -30,7 +30,7 @@ data class GitHubAsset(
 class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
-    private val currentVersion = "v1.2.2" 
+    private val currentVersion = "v1.2.3" 
     private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
     suspend fun checkForUpdate(): String? {

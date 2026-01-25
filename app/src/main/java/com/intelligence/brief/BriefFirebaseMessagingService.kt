@@ -45,7 +45,7 @@ class BriefFirebaseMessagingService : FirebaseMessagingService() {
             if (type == "update" && url != null) {
                 Log.d(TAG, "Update notification received for version: ${data["version"]} with URL: $url")
                 // Specially handle update notifications with the download URL
-                NotificationHelper.showGenericNotification(this, title, body, url)
+                NotificationHelper.showGenericNotification(this, title, body, url, isUpdate = true)
                 return
             }
             
