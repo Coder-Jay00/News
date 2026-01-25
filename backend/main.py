@@ -37,7 +37,7 @@ def main():
     random.shuffle(raw_articles)
     
     if not raw_articles:
-        print("No articles found. Exiting.")
+        print("SKIP: No articles found in the last 24h window. Notification not sent.")
         return
 
     # 3. Intelligence Layer (Analyze & Summarize)
