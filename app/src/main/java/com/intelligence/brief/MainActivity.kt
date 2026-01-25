@@ -479,7 +479,7 @@ fun FeedScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "v1.2.7 Stable",
+                            "v1.2.8 Stable",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )

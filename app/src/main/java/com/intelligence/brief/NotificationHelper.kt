@@ -67,7 +67,8 @@ object NotificationHelper {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             if (!url.isNullOrEmpty()) {
-                putExtra("url", url)
+                data = Uri.parse(url)
+                putExtra("url", url) // Keep extra for backward compatibility in the audit sweep
             }
         }
         
