@@ -180,6 +180,12 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLink(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try {
@@ -218,12 +224,24 @@ class MainActivity : ComponentActivity() {
     private fun installApk() {
         val uri = updateManager.getDownloadedFileUri(downloadId)
         if (uri != null) {
+            val file = File(uri.path!!)
             try {
+                // Check if we can install unknown apps (Android 8.0+)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (!packageManager.canRequestPackageInstalls()) {
+                        val settingsIntent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(settingsIntent)
+                        return
+                    }
+                }
+
                 // For Android 7.0+ we MUST use FileProvider
                 val contentUri = FileProvider.getUriForFile(
                     this,
                     "$packageName.fileprovider",
-                    File(uri.path!!)
+                    file
                 )
                 
                 val installIntent = Intent(Intent.ACTION_VIEW).apply {

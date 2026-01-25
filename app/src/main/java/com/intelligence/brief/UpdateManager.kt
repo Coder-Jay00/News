@@ -30,7 +30,7 @@ data class GitHubAsset(
 class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
-    private val currentVersion = "v1.2.0" 
+    private val currentVersion = "v1.2.1" 
     private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
     suspend fun checkForUpdate(): String? {
@@ -71,17 +71,7 @@ class UpdateManager(private val context: Context) {
     }
 
     fun getDownloadedFileUri(downloadId: Long): Uri? {
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val query = DownloadManager.Query().setFilterById(downloadId)
-        val cursor = downloadManager.query(query)
-        if (cursor.moveToFirst()) {
-            val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-            if (cursor.getInt(statusIndex) == DownloadManager.STATUS_SUCCESSFUL) {
-                val fileUriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
-                return Uri.parse(fileUriString)
-            }
-        }
-        cursor.close()
-        return null
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "brief_update.apk")
+        return if (file.exists()) Uri.fromFile(file) else null
     }
 }
