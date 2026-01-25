@@ -1,20 +1,20 @@
 -- Merging decision tree log ---
 provider#androidx.core.content.FileProvider
-INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:34:9-42:20
+INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:35:9-43:20
 	android:grantUriPermissions
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:38:13-47
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:39:13-47
 	android:authorities
 		INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:36:13-64
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:37:13-64
 	android:exported
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:37:13-37
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:38:13-37
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:35:13-62
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:36:13-62
 manifest
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-54:12
-INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-54:12
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-55:12
+INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-55:12
+INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-55:12
+INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:2:1-55:12
 MERGED from [androidx.work:work-runtime-ktx:2.9.0] C:\Users\Admin\.gradle\caches\8.13\transforms\fd8ede76b6e63363f7c838615602627e\transformed\work-runtime-ktx-2.9.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.work:work-runtime:2.9.0] C:\Users\Admin\.gradle\caches\8.13\transforms\e18cbe27e9d2bec95d61c5dfdf2fb21a\transformed\work-runtime-2.9.0\AndroidManifest.xml:17:1-145:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\Admin\.gradle\caches\8.13\transforms\150f5e3c39d92a3ace24d456b8969e3e\transformed\material3-release\AndroidManifest.xml:17:1-22:12
@@ -191,8 +191,8 @@ MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Admin\.grad
 	android:name
 		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:9:22-74
 application
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:12:5-52:19
-INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:12:5-52:19
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:12:5-53:19
+INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:12:5-53:19
 MERGED from [androidx.work:work-runtime:2.9.0] C:\Users\Admin\.gradle\caches\8.13\transforms\e18cbe27e9d2bec95d61c5dfdf2fb21a\transformed\work-runtime-2.9.0\AndroidManifest.xml:28:5-143:19
 MERGED from [androidx.work:work-runtime:2.9.0] C:\Users\Admin\.gradle\caches\8.13\transforms\e18cbe27e9d2bec95d61c5dfdf2fb21a\transformed\work-runtime-2.9.0\AndroidManifest.xml:28:5-143:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.6.1] C:\Users\Admin\.gradle\caches\8.13\transforms\5d450bca45a2e80c1e189ad51c835fc1\transformed\ui-test-manifest-1.6.1\AndroidManifest.xml:22:5-26:19
@@ -280,41 +280,43 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Admin\.gradle\cach
 	android:dataExtractionRules
 		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:14:9-65
 activity#com.intelligence.brief.MainActivity
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:23:9-31:20
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:23:9-32:20
+	android:launchMode
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:26:13-44
 	android:exported
 		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:25:13-36
 	android:theme
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:26:13-62
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:27:13-62
 	android:name
 		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:24:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:27:13-30:29
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:28:13-31:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:28:17-69
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:29:17-69
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:28:25-66
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:29:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:29:17-77
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:30:17-77
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:29:27-74
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:30:27-74
 service#com.intelligence.brief.BriefFirebaseMessagingService
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:45:9-51:19
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:46:9-52:19
 	android:exported
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:47:13-37
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:48:13-37
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:46:13-58
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:47:13-58
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:48:13-50:29
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:49:13-51:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:49:17-78
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:50:17-78
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:49:25-75
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:50:25-75
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:39:13-41:54
+ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:40:13-42:54
 	android:resource
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:41:17-51
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:42:17-51
 	android:name
-		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:40:17-67
+		ADDED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml:41:17-67
 uses-sdk
 INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\Admin\OneDrive\Desktop\News\app\src\main\AndroidManifest.xml

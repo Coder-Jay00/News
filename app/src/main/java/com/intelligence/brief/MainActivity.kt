@@ -199,27 +199,37 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeepLink(intent: Intent) {
         val url = intent.getStringExtra("url")
-        android.util.Log.d("MainActivity", "handleDeepLink URL: $url")
+        if (url == null) return
         
-        if (url != null) {
-            if (url.endsWith(".apk") || url.contains("vercel.app") || url.contains("github.com")) {
-                android.util.Log.d("MainActivity", "Handling as UPDATE URL")
-                // Ensure we use the direct APK link
-                val finalUrl = if ((url.contains("vercel.app") || url.contains("github.com")) && !url.endsWith(".apk")) {
-                    "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
-                } else {
-                    url
-                }
-                showUpdateDialog(finalUrl)
+        // CLEAR the extra so it doesn't fire again if the activity is re-created
+        intent.removeExtra("url")
+        android.util.Log.d("MainActivity", "handleDeepLink URL found: $url")
+        
+        // Bulletproof check for update-related domains
+        val isUpdateUrl = url.endsWith(".apk") || 
+                         url.contains("github.com") || 
+                         url.contains("vercel.app") || 
+                         url.contains("brief")
+                         
+        if (isUpdateUrl) {
+            android.util.Log.d("MainActivity", "Intercepted UPDATE URL: $url")
+            android.widget.Toast.makeText(this, "📦 Processing In-App Update...", android.widget.Toast.LENGTH_SHORT).show()
+            
+            // Normalize to a direct APK link if it's just the homepage or a release page
+            val finalUrl = if (!url.endsWith(".apk")) {
+                "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
             } else {
-                android.util.Log.d("MainActivity", "Handling as NORMAL URL (Redirecting to Browser)")
-                try {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(browserIntent)
-                } catch (e: Exception) {
-                    android.util.Log.e("MainActivity", "Failed to open deep-link URL: $url", e)
-                }
+                url
+            }
+            showUpdateDialog(finalUrl)
+        } else {
+            android.util.Log.d("MainActivity", "Non-update URL. Forwarding to browser.")
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(browserIntent)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Browser redirect failed", e)
             }
         }
     }
@@ -413,7 +423,7 @@ fun FeedScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "v1.2.3 Stable",
+                            "v1.2.4 Stable",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
