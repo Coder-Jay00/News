@@ -143,6 +143,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         
+        android.util.Log.d("MainActivity", "onCreate Intent: ${intent?.extras?.keySet()?.joinToString()}")
+        
         // Background sync (as fallback)
         NewsSyncWorker.schedule(this)
 
@@ -196,17 +198,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent) {
-        intent.getStringExtra("url")?.let { url ->
-            if (url.endsWith(".apk") || url.contains("vercel.app")) {
-                // If it's an APK URL or the Vercel app link, trigger in-app download instead of browser
-                // Ensure we use the direct APK link if it's the Vercel homepage
-                val finalUrl = if (url.contains("vercel.app") && !url.endsWith(".apk")) {
+        val url = intent.getStringExtra("url")
+        android.util.Log.d("MainActivity", "handleDeepLink URL: $url")
+        
+        if (url != null) {
+            if (url.endsWith(".apk") || url.contains("vercel.app") || url.contains("github.com")) {
+                android.util.Log.d("MainActivity", "Handling as UPDATE URL")
+                // Ensure we use the direct APK link
+                val finalUrl = if ((url.contains("vercel.app") || url.contains("github.com")) && !url.endsWith(".apk")) {
                     "https://github.com/Coder-Jay00/News/releases/latest/download/Brief.apk"
                 } else {
                     url
                 }
                 showUpdateDialog(finalUrl)
             } else {
+                android.util.Log.d("MainActivity", "Handling as NORMAL URL (Redirecting to Browser)")
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                     browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -400,11 +406,18 @@ fun FeedScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
-                    Text(
-                        "Brief.", 
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    ) 
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "Brief.", 
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "v1.2.3 Stable",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        )
+                    }
                 },
                 navigationIcon = {
                     // Settings Button on the left
