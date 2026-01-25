@@ -37,7 +37,7 @@ class IngestionEngine:
             feed = feedparser.parse(response.content)
             articles = []
             
-            for entry in feed.entries[:25]:
+            for entry in feed.entries[:7]:
                 raw_date = entry.get("published") or entry.get("updated") or str(datetime.datetime.now())
                 try:
                     dt = parser.parse(raw_date)
@@ -97,9 +97,15 @@ class IngestionEngine:
             return []
 
     def run_tier2_ingestion(self) -> List[Dict]:
-        """Runs all Tier 2 RSS fetches."""
+        """Runs all Tier 2 RSS fetches with source randomization."""
+        import random
         all_articles = []
-        for source in self.sources["tier2_rss"]:
+        
+        # Shuffle sources to ensure category diversity in every run
+        sources = self.sources["tier2_rss"].copy()
+        random.shuffle(sources)
+        
+        for source in sources:
             all_articles.extend(self.fetch_rss_feed(source["url"], source["category"]))
         
         print(f"Collected {len(all_articles)} raw Tier 2 articles.")

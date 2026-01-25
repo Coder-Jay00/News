@@ -43,7 +43,15 @@ class IntelligenceAgent:
         
         try:
             response = self.model.generate_content(prompt)
-            data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
+            res_text = response.text.strip()
+            # Find the first { and last } to extract JSON block
+            start = res_text.find('{')
+            end = res_text.rfind('}') + 1
+            if start == -1 or end == 0:
+                raise ValueError("No JSON block found in response")
+            
+            clean_json = res_text[start:end]
+            data = json.loads(clean_json)
             
             article["ai_summary"] = data.get("summary", article["summary"])
             article["trust_badge"] = data.get("trust_badge", "News")

@@ -32,6 +32,10 @@ def main():
     raw_articles = ingestion.run_tier2_ingestion()
     print(f"Total Raw Articles: {len(raw_articles)}")
     
+    # Shuffle articles to ensure the top of the feed has a healthy mix of categories
+    import random
+    random.shuffle(raw_articles)
+    
     if not raw_articles:
         print("No articles found. Exiting.")
         return
@@ -55,7 +59,8 @@ def main():
             fail_count += 1
         
         processed_articles.append(enriched_article)
-        time.sleep(1)
+        # Gemini 1.5 Flash Free Tier: 15 RPM limit (~1 req every 4 seconds)
+        time.sleep(4)
 
     # Fallback Mechanism
     if fail_count > len(raw_articles) * 0.5: # If >50% failed
