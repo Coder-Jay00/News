@@ -3,6 +3,9 @@ name: Daily Intelligence Brief
 on:
   schedule:
     - cron: '25 * * * *' # Every hour at 25 minutes UTC (which is 55 minutes IST)
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allow manual trigger
 
 jobs:
