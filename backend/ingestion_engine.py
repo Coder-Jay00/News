@@ -6,6 +6,7 @@ from typing import List, Dict
 
 class IngestionEngine:
     def __init__(self):
+        self.sources = {
             "friendly_sources": [
                 # --- AGGREGATORS (The Backups) ---
                 {"url": "https://www.bing.com/news/search?q=technology+AI&format=rss", "category": "Tech & AI", "source": "Bing News"},
@@ -23,6 +24,7 @@ class IngestionEngine:
                 {"url": "https://www.cnbc.com/id/19854910/device/rss/rss.html", "category": "Business Tech", "source": "CNBC"},
                 {"url": "https://www.aljazeera.com/xml/rss/all.xml", "category": "Global News", "source": "Al Jazeera"},
             ]
+        }
 
     def fetch_rss_feed(self, url: str, category: str, source_name: str = "Unknown") -> List[Dict]:
         """Fetches and normalizes RSS feed data using robust requests."""
