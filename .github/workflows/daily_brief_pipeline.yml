@@ -2,7 +2,7 @@ name: Daily Intelligence Brief
 
 on:
   schedule:
-    - cron: '25 * * * *' # Every hour at 25 minutes UTC (which is 55 minutes IST)
+    - cron: '25,55 * * * *' # Run at 25 and 55 UTC (55 and 25 IST) - Double check to ensure delivery
   push:
     branches:
       - main
