@@ -62,3 +62,27 @@ class DatabaseManager:
         except Exception as e:
             print(f"Fetch error: {e}")
             return []
+
+    def get_existing_links(self, links: List[str]) -> List[str]:
+        """Checks which links from the list already exist in the DB."""
+        if not self.client or not links:
+            return []
+        
+        try:
+            # Chunking to avoid URL length issues or query limits if list is huge
+            # (Though RSS batches are usually small ~50-100)
+            existing_links = []
+            
+            # Simple chunking logic (e.g., 50 at a time)
+            chunk_size = 50
+            for i in range(0, len(links), chunk_size):
+                chunk = links[i:i + chunk_size]
+                response = self.client.table("articles").select("link").in_("link", chunk).execute()
+                for record in response.data:
+                    existing_links.append(record['link'])
+                    
+            return existing_links
+            
+        except Exception as e:
+            print(f"Error checking existing links: {e}")
+            return []

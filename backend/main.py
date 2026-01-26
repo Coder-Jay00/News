@@ -42,10 +42,22 @@ def main():
 
     # 3. Intelligence Layer (Analyze & Summarize)
     print("\n--- STEP 2: INTELLIGENCE ANALYSIS ---")
+    
+    # Filter out articles that already exist in DB to save Gemini Quota
+    all_links = [a['link'] for a in raw_articles]
+    existing_links = set(db.get_existing_links(all_links))
+    
+    new_articles = [a for a in raw_articles if a['link'] not in existing_links]
+    print(f"Filtering: {len(raw_articles)} raw -> {len(new_articles)} new articles (Skipped {len(existing_links)} existing)")
+    
+    if not new_articles:
+        print("SKIP: No new articles to process.")
+        return
+
     processed_articles = []
     fail_count = 0
     
-    for article in raw_articles:
+    for article in new_articles:
         # Skip if title is too short or clearly junk (basic filter)
         if len(article['title']) < 15: 
             continue
@@ -63,7 +75,7 @@ def main():
         time.sleep(4)
 
     # Fallback Mechanism
-    if fail_count > len(raw_articles) * 0.5: # If >50% failed
+    if fail_count > len(new_articles) * 0.5: # If >50% failed
         print("\n!!! GEMINI CRITICAL FAILURE DETECTED !!!")
         print("Falling back to Tier 1 (NewsData.io)...")
         tier1_articles = ingestion.fetch_newsdata()
