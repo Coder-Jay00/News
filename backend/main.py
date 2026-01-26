@@ -27,9 +27,9 @@ def main():
     intel = IntelligenceAgent()
     db = DatabaseManager()
     
-    # 2. Ingest Data (Tier 2 RSS for now)
+    # 2. Ingest Data (Friendly RSS)
     print("\n--- STEP 1: INGESTION ---")
-    raw_articles = ingestion.run_tier2_ingestion()
+    raw_articles = ingestion.run_friendly_ingestion()
     print(f"Total Raw Articles: {len(raw_articles)}")
     
     # Shuffle articles to ensure the top of the feed has a healthy mix of categories
