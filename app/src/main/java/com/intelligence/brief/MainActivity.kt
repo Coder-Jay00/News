@@ -36,6 +36,8 @@ import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.Locale
 import java.util.*
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import java.io.File
@@ -147,6 +149,15 @@ class MainActivity : ComponentActivity() {
                     android.util.Log.d("FCM", "Subscribed to news topic")
                 }
             }
+        
+        // Save FCM Token for Watchlist (Feature 10)
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                repository.saveFcmToken(token)
+                android.util.Log.d("FCM", "Token saved: ${token.take(10)}...")
+            }
+        }
         
         android.util.Log.d("MainActivity", "onCreate Intent: ${intent?.extras?.keySet()?.joinToString()}")
         
@@ -372,6 +383,156 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// ... (Existing imports)
+
+// Feature 9: Morning Reel Screen
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MorningReelScreen(
+    repository: DataRepository,
+    onBack: () -> Unit
+) {
+    var reel by remember { mutableStateOf<DailyReel?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var currentIndex by remember { mutableIntStateOf(0) }
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+
+    LaunchedEffect(true) {
+        reel = repository.fetchMorningReel()
+        isLoading = false
+    }
+
+    Scaffold(
+        containerColor = Color.Black, // Immersive Dark Mode
+        topBar = {
+            TopAppBar(
+                title = { Text(reel?.title ?: "Morning Reel", color = Color.White) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Text("←", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)
+            } else if (reel == null || reel?.stories.isNullOrEmpty()) {
+                Text(
+                    "No Morning Reel available for today.", 
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                val stories = reel!!.stories
+                val currentStory = stories[currentIndex]
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Pagination Dots
+                    Row(modifier = Modifier.padding(bottom = 32.dp)) {
+                        stories.forEachIndexed { index, _ ->
+                            Box(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(8.dp)
+                                    .background(
+                                        if (index == currentIndex) Color.White else Color.Gray,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                            )
+                        }
+                    }
+
+                    // Card Content
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(bottom = 32.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = currentStory.source,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color(0xFF4CAF50) // Green accent
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = currentStory.title,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    text = HtmlTextMapper.fromHtml(currentStory.aiSummary ?: currentStory.summary),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.LightGray
+                                )
+                            }
+                            
+                            Button(
+                                onClick = { uriHandler.openUri(currentStory.link) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                            ) {
+                                Text("Read Full Story", color = Color.Black)
+                            }
+                        }
+                    }
+
+                    // Navigation Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        if (currentIndex > 0) {
+                            TextButton(onClick = { currentIndex-- }) {
+                                Text("Previous", color = Color.White)
+                            }
+                        } else {
+                            Spacer(Modifier.width(10.dp))
+                        }
+
+                        if (currentIndex < stories.size - 1) {
+                            Button(onClick = { currentIndex++ }) {
+                                Text("Next")
+                            }
+                        } else {
+                            Button(onClick = onBack) {
+                                Text("Finish")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ... Header of FeedScreen (add Button to open Reel) ...
+// (Note: Since I'm replacing chunks, I'll modify AppNavigator and FeedScreen below)
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigator(
@@ -380,32 +541,39 @@ fun AppNavigator(
     onToggleTheme: () -> Unit
 ) {
     var isOnboarded by remember { mutableStateOf(repository.isOnboarded()) }
-    var showSettings by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf("feed") } // simple router
 
-    when {
-        showSettings -> {
+    when (currentScreen) {
+        "settings" -> {
             SettingsScreen(
                 repository = repository,
-                onBack = { showSettings = false }
+                onBack = { currentScreen = "feed" }
             )
         }
-        isOnboarded -> {
-            FeedScreen(
+        "reel" -> {
+            MorningReelScreen(
                 repository = repository,
-                isDarkMode = isDarkMode,
-                onToggleTheme = onToggleTheme,
-                onOpenSettings = { showSettings = true }
+                onBack = { currentScreen = "feed" }
             )
         }
-        else -> {
-            OnboardingScreen { interests ->
-                repository.saveInterests(interests)
-                isOnboarded = true
+        "feed" -> {
+            if (isOnboarded) {
+                FeedScreen(
+                    repository = repository,
+                    isDarkMode = isDarkMode,
+                    onToggleTheme = onToggleTheme,
+                    onOpenSettings = { currentScreen = "settings" },
+                    onOpenReel = { currentScreen = "reel" }
+                )
+            } else {
+                OnboardingScreen { interests ->
+                    repository.saveInterests(interests)
+                    isOnboarded = true
+                }
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -413,8 +581,10 @@ fun FeedScreen(
     repository: DataRepository,
     isDarkMode: Boolean?,
     onToggleTheme: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenReel: () -> Unit
 ) {
+    // ... (Existing state items) ...
     var articles by remember { mutableStateOf<List<Article>>(emptyList()) }
     var currentPage by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(false) }
@@ -427,9 +597,7 @@ fun FeedScreen(
     fun refresh() {
         scope.launch {
             isRefreshing = true
-            // Trigger a fresh news crawl in the background
             repository.triggerSync()
-            
             currentPage = 0
             articles = repository.fetchArticles(0)
             hasMore = articles.size >= DataRepository.PAGE_SIZE
@@ -444,22 +612,21 @@ fun FeedScreen(
         isLoading = false
         hasMore = articles.size >= DataRepository.PAGE_SIZE
     }
-
-    // Detect scroll to bottom and load more
+    
+    // ... (Scroll Listener) ...
     LaunchedEffect(listState) {
         snapshotFlow { 
             val layoutInfo = listState.layoutInfo
             val totalItems = layoutInfo.totalItemsCount
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisibleIndex >= totalItems - 3 // Trigger when 3 items from bottom
+            lastVisibleIndex >= totalItems - 3 
         }.collect { nearBottom ->
             if (nearBottom && hasMore && !isLoading && !isRefreshing && articles.isNotEmpty()) {
                 isLoading = true
                 currentPage++
                 val moreArticles = repository.fetchArticles(currentPage)
-                if (moreArticles.isEmpty()) {
-                    hasMore = false
-                } else {
+                if (moreArticles.isEmpty()) { hasMore = false } 
+                else { 
                     articles = articles + moreArticles
                     hasMore = moreArticles.size >= DataRepository.PAGE_SIZE
                 }
@@ -473,31 +640,20 @@ fun FeedScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Brief.", 
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "v1.2.8 Stable",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                        )
+                        Text("Brief.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        Text("v1.2.9 Intelligence", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                     }
                 },
                 navigationIcon = {
-                    // Settings Button on the left
-                    IconButton(onClick = onOpenSettings) {
-                        Text("⚙️", style = MaterialTheme.typography.titleLarge)
-                    }
+                    IconButton(onClick = onOpenSettings) { Text("⚙️", style = MaterialTheme.typography.titleLarge) }
                 },
                 actions = {
-                    // Theme Toggle Button
+                    // Feature 9: Morning Reel Entry Point
+                    IconButton(onClick = onOpenReel) {
+                        Text("🎬", style = MaterialTheme.typography.titleLarge)
+                    }
                     IconButton(onClick = onToggleTheme) {
-                        Text(
-                            text = if (isDarkMode == true) "☀️" else "🌙",
-                            style = MaterialTheme.typography.titleLarge
-                        )
+                        Text(if (isDarkMode == true) "☀️" else "🌙", style = MaterialTheme.typography.titleLarge)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -507,82 +663,34 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        val pullToRefreshState = rememberPullToRefreshState()
+        // ... (Existing Box/LazyColumn logic unchanged, just passing articles to NewsCard) ...
+         val pullToRefreshState = rememberPullToRefreshState()
         
-        // Connect the refreshing state
         LaunchedEffect(pullToRefreshState.isRefreshing) {
             if (pullToRefreshState.isRefreshing) {
-                isRefreshing = true
-                currentPage = 0
-                articles = repository.fetchArticles(0)
-                hasMore = articles.size >= DataRepository.PAGE_SIZE
-                isRefreshing = false
+                refresh()
                 pullToRefreshState.endRefresh()
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .nestedScroll(pullToRefreshState.nestedScrollConnection)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
             if (articles.isEmpty() && isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
             } else if (articles.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No articles found\nPull down to refresh", 
-                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                         textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found\nPull down to refresh") }
             } else {
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(16.dp)
-                ) {
+                LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
                     items(articles) { article ->
                         NewsCard(article)
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    
-                    // Loading indicator at bottom
-                    if (isLoading && hasMore) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            }
-                        }
-                    }
-                    
-                    // End of list message
-                    if (!hasMore && articles.isNotEmpty()) {
-                        item {
-                            Text(
-                                "You're all caught up! ✓",
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
+                    if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
                 }
             }
-
-            // Pull refresh indicator at the top
-            PullToRefreshContainer(
-                state = pullToRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+            PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -593,84 +701,40 @@ fun NewsCard(article: Article) {
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { uriHandler.openUri(article.link) }
+        modifier = Modifier.fillMaxWidth().clickable { uriHandler.openUri(article.link) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Source • Category
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = article.source,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-                Text(
-                    text = " • ${article.category}", 
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val timeAgo = getRelativeTime(article.published)
-                if (timeAgo.isNotEmpty()) {
-                    Text(
-                        text = " • $timeAgo",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        maxLines = 1
-                    )
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(article.source, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(" • ${article.category}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                
+                Spacer(Modifier.weight(1f))
+                
+                // Feature 5: Trust Score Display
+                if (article.trustScore != null) {
+                    val color = if (article.trustScore >= 80) Color(0xFF4CAF50) else if (article.trustScore >= 50) Color(0xFFFFC107) else Color(0xFFF44336)
+                    Surface(color = color.copy(alpha=0.1f), shape = RoundedCornerShape(4.dp)) {
+                        Text(
+                            text = "${article.trustScore}% Trust",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
             
             Spacer(modifier = Modifier.height(10.dp))
-            
-            // Title
-            Text(
-                text = article.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
+            Text(article.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Summary (Prioritize AI Summary only if it succeeded)
-            val displaySummary = if (article.aiSummary != null && 
-                !article.aiSummary.lowercase().contains("analysis failed") &&
-                !article.aiSummary.lowercase().contains("unavailable")) {
-                article.aiSummary
-            } else {
-                article.summary
-            }
+            val displaySummary = if (article.aiSummary != null && !article.aiSummary.contains("Analysis Failed")) article.aiSummary else article.summary
+            Text(HtmlTextMapper.fromHtml(displaySummary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 4, overflow = TextOverflow.Ellipsis)
             
-            Text(
-                text = HtmlTextMapper.fromHtml(displaySummary), 
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            // Trust Badge
-            if (article.trustBadge.isNotEmpty() && article.trustBadge != "Unverified" && article.trustBadge != "News") {
+            if (article.trustBadge.isNotEmpty() && article.trustBadge != "News") {
                  Spacer(modifier = Modifier.height(12.dp))
-                 SuggestionChip(
-                    onClick = { uriHandler.openUri(article.link) },
-                    label = { Text(article.trustBadge) },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        labelColor = MaterialTheme.colorScheme.secondary
-                    )
-                )
+                 SuggestionChip(onClick = {}, label = { Text(article.trustBadge) })
             }
         }
     }
@@ -753,45 +817,60 @@ fun SettingsScreen(
     repository: DataRepository,
     onBack: () -> Unit
 ) {
-    val allCategories = listOf(
-        "India News", "World News", "Business", "Technology", "Science", "Health", 
-        "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity"
-    )
-    
+    val allCategories = listOf("India News", "World News", "Business", "Technology", "Science", "Health", "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity")
     val currentInterests = repository.getInterests()
     val selected = remember { mutableStateListOf(*currentInterests.toTypedArray()) }
+    
+    // Feature 10: Watchlist UI State
+    var watchlistKeyword by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
-                    }
-                }
+                navigationIcon = { IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text(
-                "📰 News Categories",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                "Select topics you want to see",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             
-            Spacer(modifier = Modifier.height(16.dp))
+            // Watchlist Section (New)
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha=0.1f))) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("🔔 Watchlist Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Get notified when new stories match these keywords.", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(8.dp))
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = watchlistKeyword,
+                            onValueChange = { watchlistKeyword = it },
+                            label = { Text("Add Keyword (e.g. NVIDIA)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = {
+                            if (watchlistKeyword.isNotEmpty()) {
+                                scope.launch {
+                                    repository.addWatchlistKeyword(watchlistKeyword)
+                                    android.widget.Toast.makeText(context, "Alert added for '$watchlistKeyword'", android.widget.Toast.LENGTH_SHORT).show()
+                                    watchlistKeyword = ""
+                                }
+                            }
+                        }) {
+                            Text("+")
+                        }
+                    }
+                }
+            }
+            
+            Spacer(Modifier.height(24.dp))
+            
+            Text("📰 News Categories", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
             
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(allCategories) { category ->
@@ -799,33 +878,16 @@ fun SettingsScreen(
                     FilterChip(
                         selected = isSelected,
                         onClick = { 
-                            if (isSelected) selected.remove(category) 
-                            else selected.add(category) 
+                            if (isSelected) selected.remove(category) else selected.add(category)
+                            repository.saveInterests(selected.toSet())
                         },
                         label = { Text(category) },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        modifier = Modifier.fillMaxWidth().padding(4.dp)
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Button(
-                onClick = {
-                    repository.saveInterests(selected.toSet())
-                    onBack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Save Changes", fontWeight = FontWeight.SemiBold)
-            }
+            Text("v1.2.9", modifier = Modifier.align(Alignment.CenterHorizontally), color = Color.Gray)
         }
     }
 }

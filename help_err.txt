@@ -1,0 +1,27 @@
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+A problem occurred configuring root project 'TheIntelligenceBrief'.
+> Could not resolve all artifacts for configuration 'classpath'.
+   > Could not resolve com.android.tools.build:gradle:8.13.2.
+     Required by:
+         root project : > com.android.application:com.android.application.gradle.plugin:8.13.2
+      > Dependency requires at least JVM runtime version 11. This build uses a Java 8 JVM.
+   > Could not resolve com.google.devtools.ksp:symbol-processing-gradle-plugin:2.3.2.
+     Required by:
+         root project : > com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.3.2
+      > Dependency requires at least JVM runtime version 11. This build uses a Java 8 JVM.
+   > Could not resolve com.google.gms:google-services:4.4.4.
+     Required by:
+         root project : > com.google.gms.google-services:com.google.gms.google-services.gradle.plugin:4.4.4
+      > Dependency requires at least JVM runtime version 11. This build uses a Java 8 JVM.
+
+* Try:
+> Run this build using a Java 11 or newer JVM.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s

@@ -27,7 +27,32 @@ data class Article(
     val trustBadge: String = "",
     val icon: String = "",
     val link: String = "",
-    val tier: Int? = null
+    val tier: Int? = null,
+    // Feature 5: Trust Score
+    @SerialName("trust_score")
+    val trustScore: Int? = null,
+    @SerialName("trust_reason")
+    val trustReason: String? = null
+)
+
+// Feature 9: Morning Reel Model
+@Serializable
+data class DailyReel(
+    val title: String = "",
+    val summary: String = "",
+    val stories: List<Article> = emptyList()
+)
+
+@Serializable
+data class ReelWrapper(
+    val content: DailyReel
+)
+
+@Serializable
+data class WatchlistEntry(
+    @SerialName("user_fcm_token")
+    val token: String,
+    val keyword: String
 )
 
 class DataRepository(context: Context) {
@@ -58,6 +83,14 @@ class DataRepository(context: Context) {
     fun getInterests(): Set<String> {
         return prefs.getStringSet("interests", setOf("AI & Frontiers", "Cybersecurity")) ?: emptySet()
     }
+    
+    fun getFcmToken(): String? {
+       return prefs.getString("fcm_token", null) 
+    }
+    
+    fun saveFcmToken(token: String) {
+        prefs.edit().putString("fcm_token", token).apply()
+    }
 
     // Data Fetching with Pagination - Server Side Filtering & Sorting
     suspend fun fetchArticles(page: Int = 0): List<Article> {
@@ -83,28 +116,45 @@ class DataRepository(context: Context) {
                 }
             
             val list = response.decodeList<Article>()
-            android.util.Log.d("DataRepo", "Fetched ${list.size} articles for categories: $interests")
-            
-            // FALLBACK: If list is empty, try fetching ANY articles to see if DB is even working
-            if (list.isEmpty() && page == 0) {
-                android.util.Log.d("DataRepo", "Filtered list empty. Trying fallback fetch for ANY articles...")
-                val fallbackResponse = supabase.from("articles")
-                    .select() {
-                        order("published", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
-                        limit(5)
-                    }
-                val fallbackList = fallbackResponse.decodeList<Article>()
-                android.util.Log.d("DataRepo", "Fallback fetch returned ${fallbackList.size} items.")
-                return fallbackList
-            }
-
             return list
             
         } catch (e: Exception) {
-            android.util.Log.e("DataRepo", "FATAL ERROR fetching data: ${e.message}", e)
-            // Print stack trace to see exactly where it fails (likely JSON decoding)
-            e.printStackTrace()
+            android.util.Log.e("DataRepo", "Error fetching data: ${e.message}", e)
             return emptyList()
+        }
+    }
+    
+    // Feature 9: Fetch Morning Reel
+    suspend fun fetchMorningReel(): DailyReel? {
+        try {
+            // Get today's reel
+            val response = supabase.from("daily_briefings")
+                .select() {
+                    order("created_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+                    limit(1)
+                }
+            val wrappers = response.decodeList<ReelWrapper>()
+            return wrappers.firstOrNull()?.content
+        } catch (e: Exception) {
+            android.util.Log.e("DataRepo", "Error fetching reel: ${e.message}")
+            return null
+        }
+    }
+    
+    // Feature 10: Watchlist Management
+    suspend fun addWatchlistKeyword(keyword: String) {
+        val token = getFcmToken()
+        if (token.isNullOrEmpty()) {
+             android.util.Log.e("DataRepo", "Cannot add watchlist: No FCM Token found")
+             return
+        }
+        
+        try {
+            val entry = WatchlistEntry(token = token, keyword = keyword)
+            supabase.from("user_watchlists").insert(entry)
+            android.util.Log.d("DataRepo", "Watchlist keyword added: $keyword")
+        } catch (e: Exception) {
+            android.util.Log.e("DataRepo", "Error adding watchlist: ${e.message}")
         }
     }
 
