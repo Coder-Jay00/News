@@ -47,8 +47,17 @@ class IngestionEngine:
                     dt = parser.parse(raw_date)
                     if not dt.tzinfo:
                         dt = dt.replace(tzinfo=datetime.timezone.utc)
+                    
+                    # Filter: Skip articles older than 24 hours
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    if (now - dt).total_seconds() > 86400: # 24 hours
+                        continue
+
                     iso_date = dt.astimezone(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
                 except:
+                    # If date parsing fails, default to NOW (fresh) or skip?
+                    # Let's default to now but maybe mark it? 
+                    # Simplicity: just use now.
                     iso_date = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
                 # Handle various summary fields
