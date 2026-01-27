@@ -96,7 +96,41 @@ def main():
     else:
         print("SKIP: No processed articles to upload.")
     
-    # 5. Send Push Notification (NEW!)
+    # Feature 9: The Morning Reel (Top 3)
+    # -----------------------------------
+    if processed_articles:
+        print("\n--- FEATURE 9: GENERATING MORNING REEL ---")
+        # Sort by Trust Score desc to get highest quality news
+        sorted_arts = sorted(processed_articles, key=lambda x: x.get('trust_score', 0), reverse=True)
+        top_3 = sorted_arts[:3]
+        
+        reel_content = {
+            "title": f"Brief. Intelligence for {datetime.datetime.now().strftime('%b %d')}",
+            "summary": "Your daily high-signal update.",
+            "stories": top_3
+        }
+        db.save_morning_reel(reel_content)
+
+    # Feature 10: Watchlist Alerts
+    # -----------------------------------
+    print("\n--- FEATURE 10: CHECKING WATCHLISTS ---")
+    watchlists = db.get_all_watchlists() # List of {token, keyword}
+    for watch_rule in watchlists:
+        keyword = watch_rule.get('keyword', '').lower()
+        token = watch_rule.get('user_fcm_token')
+        
+        for art in processed_articles:
+            if keyword in art['title'].lower() or keyword in art.get('ai_summary', '').lower():
+                print(f"Watchlist Hit! {keyword} found in {art['title']}")
+                from push_notifier import send_targeted_notification
+                send_targeted_notification(
+                    token=token, 
+                    title=f"🔔 Alert: {keyword.capitalize()} News",
+                    body=f"Found in: {art['title']}"
+                )
+                break # Alert once per keyword per run to avoid spam
+
+    # 5. Send Push Notification (General)
     print("\n--- STEP 4: PUSH NOTIFICATION ---")
     if processed_articles:
         top_headline = processed_articles[0].get('title', 'New stories available')

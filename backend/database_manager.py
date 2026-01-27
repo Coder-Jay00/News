@@ -86,3 +86,29 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error checking existing links: {e}")
             return []
+
+    def save_morning_reel(self, content_json: Dict):
+        """Feature 9: Save the Top 3 stories for the Morning Reel."""
+        if not self.client: return
+        try:
+            today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+            data = {
+                "date_str": today_str,
+                "content": content_json
+            }
+            # Upsert so we only have one Reel per day (updating it as news breaks)
+            self.client.table("daily_briefings").upsert(data, on_conflict="date_str").execute()
+            print(f"✅ Saved Morning Reel for {today_str}")
+        except Exception as e:
+            print(f"Failed to save Morning Reel: {e}")
+
+    def get_all_watchlists(self) -> List[Dict]:
+        """Feature 10: Fetch all user watchlists for processing."""
+        if not self.client: return []
+        try:
+            # We want to fetch all rules: {user_fcm_token, keyword}
+            response = self.client.table("user_watchlists").select("*").execute()
+            return response.data
+        except Exception as e:
+            print(f"Failed to fetch watchlists: {e}")
+            return []

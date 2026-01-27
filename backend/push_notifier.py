@@ -121,3 +121,31 @@ def send_update_notification(version: str, download_url: str = "https://github.c
     except Exception as e:
         print(f"[FCM] Failed to send update notification: {e}")
         return False
+
+def send_targeted_notification(token: str, title: str, body: str):
+    """
+    Feature 10: Send a specific notification to a specific user (Watchlist Alert).
+    """
+    if not init_firebase(): return False
+    
+    try:
+        message = messaging.Message(
+            token=token, # Target specific device
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    channel_id="brief_alerts_channel", # Separate channel for alerts
+                    priority="high"
+                )
+            )
+        )
+        response = messaging.send(message)
+        print(f"[FCM] Watchlist Alert sent to {token[:10]}...: {response}")
+        return True
+    except Exception as e:
+        print(f"[FCM] Failed to send targeted notification: {e}")
+        return False
