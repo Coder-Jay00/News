@@ -10,8 +10,9 @@ class IntelligenceAgent:
             print("ERROR: GEMINI_API_KEY is missing or contains a placeholder!")
         else:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
-            print("Intelligence Agent initialized (Model: gemini-1.5-flash)")
+            # Use pinned version to avoid 404 on v1beta alias lookup
+            self.model = genai.GenerativeModel('gemini-1.5-flash-001')
+            print("Intelligence Agent initialized (Model: gemini-1.5-flash-001)")
 
     def analyze_article(self, article: Dict) -> Dict:
         """
