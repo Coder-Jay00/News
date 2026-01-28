@@ -100,15 +100,28 @@ def main():
     # Feature 9: The Morning Reel (Top 3)
     # -----------------------------------
     if processed_articles:
-        print("\n--- FEATURE 9: GENERATING MORNING REEL ---")
-        # Sort by Trust Score desc to get highest quality news
-        sorted_arts = sorted(processed_articles, key=lambda x: x.get('trust_score', 0), reverse=True)
-        top_3 = sorted_arts[:3]
+        print("\n--- FEATURE 9: GENERATING MORNING REEL (DIVERSE) ---")
+        # Group by Category and pick Top 1 from each
+        categories = {}
+        for art in processed_articles:
+            cat = art.get('category', 'General')
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(art)
+        
+        diverse_selection = []
+        for cat, arts in categories.items():
+            # Sort by score desc, pick top 1
+            top_art = sorted(arts, key=lambda x: x.get('trust_score', 0), reverse=True)[0]
+            diverse_selection.append(top_art)
+            
+        # Limit to 7 stories max to keep it a "Brief"
+        final_reel_stories = diverse_selection[:7]
         
         reel_content = {
-            "title": f"Daily Intelligence Reel • {datetime.datetime.now().strftime('%b %d')}",
-            "summary": "Your daily high-signal update.",
-            "stories": top_3
+            "title": f"The Daily Pulse • {datetime.datetime.now().strftime('%I:%M %p')}",
+            "summary": "Your live high-signal update.",
+            "stories": final_reel_stories
         }
         db.save_morning_reel(reel_content)
 

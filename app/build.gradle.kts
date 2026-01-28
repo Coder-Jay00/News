@@ -15,8 +15,8 @@ android {
         applicationId = "com.intelligence.brief"
         minSdk = 24
         targetSdk = 34
-        versionCode = 17
-        versionName = "2.0.5"
+        versionCode = 19
+        versionName = "2.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.foundation:foundation")
     
     // Supabase
     implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.0")

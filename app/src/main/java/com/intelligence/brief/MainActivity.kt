@@ -35,7 +35,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.Locale
-import java.util.*
+import java.util.* 
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.core.content.FileProvider
@@ -386,7 +390,7 @@ class MainActivity : ComponentActivity() {
 // ... (Existing imports)
 
 // Feature 9: Morning Reel Screen
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MorningReelScreen(
     repository: DataRepository,
@@ -394,8 +398,8 @@ fun MorningReelScreen(
 ) {
     var reel by remember { mutableStateOf<DailyReel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    var currentIndex by remember { mutableIntStateOf(0) }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    val pagerState = rememberPagerState { reel?.stories?.size ?: 0 }
 
     LaunchedEffect(true) {
         try {
@@ -410,125 +414,104 @@ fun MorningReelScreen(
     }
 
     Scaffold(
-        containerColor = Color.Black, // Immersive Dark Mode
+        containerColor = Color.Black,
         topBar = {
-            TopAppBar(
-                title = { Text(reel?.title ?: "Morning Reel", color = Color.White) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←", color = Color.White, style = MaterialTheme.typography.titleLarge)
+            if (!isLoading && reel != null) {
+                // Progress Indicators at Top
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    repeat(pagerState.pageCount) { iteration ->
+                        val color = if (pagerState.currentPage == iteration) Color.White else Color.Gray.copy(alpha = 0.5f)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(4.dp)
+                                .background(color, RoundedCornerShape(2.dp))
+                        )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+                }
+                
+                // Close Button Layout
+                Box(modifier = Modifier.fillMaxWidth().padding(top = 24.dp, end = 16.dp)) {
+                    IconButton(onClick = onBack, modifier = Modifier.align(Alignment.TopEnd)) {
+                        Text("✕", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)
             } else if (reel == null || reel?.stories.isNullOrEmpty()) {
-                Text(
-                    "No Morning Reel available for today.", 
-                    color = Color.White,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No Daily Pulse Available", color = Color.White, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onBack) { Text("Go Back", color = Color.LightGray) }
+                }
             } else {
                 val stories = reel!!.stories
-                val currentStory = stories[currentIndex]
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    // Pagination Dots
-                    Row(modifier = Modifier.padding(bottom = 32.dp)) {
-                        stories.forEachIndexed { index, _ ->
-                            Box(
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(8.dp)
-                                    .background(
-                                        if (index == currentIndex) Color.White else Color.Gray,
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
+                
+                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                    val story = stories[page]
+                    
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Category Badge
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        ) {
+                            Text(
+                                story.category,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
-                    }
 
-                    // Card Content
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(bottom = 32.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
+                        // Title
+                        Text(
+                            text = story.title,
+                            style = MaterialTheme.typography.displaySmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 32.dp)
+                        )
+                        
+                        Divider(color = Color.Gray.copy(alpha=0.3f), thickness = 1.dp, modifier = Modifier.width(100.dp))
+                        Spacer(modifier = Modifier.height(32.dp))
+                        
+                        // Summary
+                        Text(
+                            text = HtmlTextMapper.fromHtml(story.aiSummary ?: story.summary),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.LightGray,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            lineHeight = 28.sp
+                        )
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+                        
+                        // "Read More" Button (Swipe Up indication)
+                        Button(
+                            onClick = { uriHandler.openUri(story.link) },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                         ) {
-                            Column {
-                                Text(
-                                    text = currentStory.source,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Color(0xFF4CAF50) // Green accent
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = currentStory.title,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
-                                Text(
-                                    text = HtmlTextMapper.fromHtml(currentStory.aiSummary ?: currentStory.summary),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.LightGray
-                                )
-                            }
-                            
-                            Button(
-                                onClick = { uriHandler.openUri(currentStory.link) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                            ) {
-                                Text("Read Full Story", color = Color.Black)
-                            }
+                            Text("Read Full Story", color = Color.Black, fontWeight = FontWeight.Bold)
                         }
-                    }
-
-                    // Navigation Buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        if (currentIndex > 0) {
-                            TextButton(onClick = { currentIndex-- }) {
-                                Text("Previous", color = Color.White)
-                            }
-                        } else {
-                            Spacer(Modifier.width(10.dp))
-                        }
-
-                        if (currentIndex < stories.size - 1) {
-                            Button(onClick = { currentIndex++ }) {
-                                Text("Next")
-                            }
-                        } else {
-                            Button(onClick = onBack) {
-                                Text("Finish")
-                            }
-                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Source: ${story.source}", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
