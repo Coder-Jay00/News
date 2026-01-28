@@ -398,7 +398,14 @@ fun MorningReelScreen(
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     LaunchedEffect(true) {
-        reel = repository.fetchMorningReel()
+        try {
+            kotlinx.coroutines.withTimeout(5000L) {
+                reel = repository.fetchMorningReel()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Reel", "Timeout or Error: $e")
+            reel = null
+        }
         isLoading = false
     }
 
@@ -824,67 +831,98 @@ fun SettingsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } }
+                navigationIcon = { IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             
-            // Watchlist Section (New)
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha=0.1f))) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🔔 Watchlist Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Get notified when new stories match these keywords.", style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(8.dp))
-                    
+            // Watchlist Section - Premium Card
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha=0.15f))
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(
-                            value = watchlistKeyword,
-                            onValueChange = { watchlistKeyword = it },
-                            label = { Text("Add Keyword (e.g. NVIDIA)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = {
-                            if (watchlistKeyword.isNotEmpty()) {
-                                scope.launch {
-                                    repository.addWatchlistKeyword(watchlistKeyword)
-                                    android.widget.Toast.makeText(context, "Alert added for '$watchlistKeyword'", android.widget.Toast.LENGTH_SHORT).show()
-                                    watchlistKeyword = ""
-                                }
-                            }
-                        }) {
-                            Text("+")
+                        Text("🔔", style = MaterialTheme.typography.titleLarge)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("Watchlist Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("Notify me for keywords:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                }
-            }
-            
-            Spacer(Modifier.height(24.dp))
-            
-            Text("📰 News Categories", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-            
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(allCategories) { category ->
-                    val isSelected = selected.contains(category)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { 
-                            if (isSelected) selected.remove(category) else selected.add(category)
-                            repository.saveInterests(selected.toSet())
+                    Spacer(Modifier.height(16.dp))
+                    
+                    OutlinedTextField(
+                        value = watchlistKeyword,
+                        onValueChange = { watchlistKeyword = it },
+                        label = { Text("e.g. NVIDIA, Bitcoin") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        trailingIcon = {
+                            if (watchlistKeyword.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    scope.launch {
+                                        repository.addWatchlistKeyword(watchlistKeyword)
+                                        android.widget.Toast.makeText(context, "Alert added for '$watchlistKeyword'", android.widget.Toast.LENGTH_SHORT).show()
+                                        watchlistKeyword = ""
+                                    }
+                                }) {
+                                    Text("ADD", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
                         },
-                        label = { Text(category) },
-                        modifier = Modifier.fillMaxWidth().padding(4.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
             }
             
-            Text("v1.2.9", modifier = Modifier.align(Alignment.CenterHorizontally), color = Color.Gray)
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+            
+            Text(
+                "Customize Feed", 
+                style = MaterialTheme.typography.titleMedium, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
+            )
+            
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(allCategories) { category ->
+                    val isSelected = selected.contains(category)
+                    ListItem(
+                        headlineContent = { Text(category, fontWeight = FontWeight.Medium) },
+                        trailingContent = {
+                            Switch(
+                                checked = isSelected,
+                                onCheckedChange = { checked ->
+                                    if (checked) selected.add(category) else selected.remove(category)
+                                    repository.saveInterests(selected.toSet())
+                                }
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                }
+            }
+            
+            // Footer
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Brief. v${BuildConfig.VERSION_NAME}", 
+                    style = MaterialTheme.typography.labelMedium, 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
         }
     }
 }
