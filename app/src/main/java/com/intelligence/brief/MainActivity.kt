@@ -36,7 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.Locale
 import java.util.* 
-import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.unit.sp
@@ -453,65 +453,78 @@ fun MorningReelScreen(
             } else {
                 val stories = reel!!.stories
                 
-                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
                     val story = stories[page]
                     
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Category Badge
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.padding(bottom = 24.dp)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                story.category,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
+                            // Category Badge
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(bottom = 24.dp)
+                            ) {
+                                Text(
+                                    story.category,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
 
-                        // Title
-                        Text(
-                            text = story.title,
-                            style = MaterialTheme.typography.displaySmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 32.dp)
-                        )
-                        
-                        Divider(color = Color.Gray.copy(alpha=0.3f), thickness = 1.dp, modifier = Modifier.width(100.dp))
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
-                        // Summary
-                        Text(
-                            text = HtmlTextMapper.fromHtml(story.aiSummary ?: story.summary),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.LightGray,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            lineHeight = 28.sp
-                        )
-                        
-                        Spacer(modifier = Modifier.weight(1f))
-                        
-                        // "Read More" Button (Swipe Up indication)
-                        Button(
-                            onClick = { uriHandler.openUri(story.link) },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                        ) {
-                            Text("Read Full Story", color = Color.Black, fontWeight = FontWeight.Bold)
+                            // Title
+                            Text(
+                                text = story.title,
+                                style = MaterialTheme.typography.displaySmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(bottom = 32.dp)
+                            )
+                            
+                            Divider(color = Color.Gray.copy(alpha=0.3f), thickness = 1.dp, modifier = Modifier.width(100.dp))
+                            Spacer(modifier = Modifier.height(32.dp))
+                            
+                            // Summary
+                            Text(
+                                text = HtmlTextMapper.fromHtml(story.aiSummary ?: story.summary),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.LightGray,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                lineHeight = 28.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(48.dp))
+                            
+                            // "Read More" Button
+                            Button(
+                                onClick = { uriHandler.openUri(story.link) },
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                            ) {
+                                Text("Read Full Story", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Source: ${story.source}", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                         }
                         
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Source: ${story.source}", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        // Swipe Hint (Only on first page)
+                        if (page == 0) {
+                            Column(
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Swipe Up for Next Story", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.labelSmall)
+                                Text("↓", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
                     }
                 }
             }
