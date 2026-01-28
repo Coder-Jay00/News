@@ -47,6 +47,17 @@ class IntelligenceAgent:
         try:
             response = self.model.generate_content(prompt)
             res_text = response.text.strip()
+            
+            # Clean Markdown if present
+            if res_text.startswith("```json"):
+                res_text = res_text[7:]
+            if res_text.startswith("```"):
+                res_text = res_text[3:]
+            if res_text.endswith("```"):
+                res_text = res_text[:-3]
+            
+            res_text = res_text.strip()
+            
             # Find the first { and last } to extract JSON block
             start = res_text.find('{')
             end = res_text.rfind('}') + 1
@@ -101,7 +112,18 @@ class IntelligenceAgent:
         """
         try:
             response = self.model.generate_content(prompt)
-            clean_json = response.text[response.text.find('{'):response.text.rfind('}')+1]
+            res_text = response.text.strip()
+            
+            # Clean Markdown
+            if res_text.startswith("```json"):
+                res_text = res_text[7:]
+            if res_text.startswith("```"):
+                res_text = res_text[3:]
+            if res_text.endswith("```"):
+                res_text = res_text[:-3]
+            res_text = res_text.strip()
+            
+            clean_json = res_text[res_text.find('{'):res_text.rfind('}')+1]
             return json.loads(clean_json)
         except:
             return None # Fallback to using individual articles

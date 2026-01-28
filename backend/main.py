@@ -106,7 +106,7 @@ def main():
         top_3 = sorted_arts[:3]
         
         reel_content = {
-            "title": f"Brief. Intelligence for {datetime.datetime.now().strftime('%b %d')}",
+            "title": f"Daily Intelligence Reel • {datetime.datetime.now().strftime('%b %d')}",
             "summary": "Your daily high-signal update.",
             "stories": top_3
         }
