@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.lifecycle.lifecycleScope
 import com.intelligence.brief.ui.theme.BriefTheme
 import androidx.compose.material3.pulltorefresh.*
@@ -637,10 +639,26 @@ fun FeedScreen(
 
     // Initial load
     LaunchedEffect(true) {
-        isLoading = true
-        articles = repository.fetchArticles(0)
-        isLoading = false
-        hasMore = articles.size >= DataRepository.PAGE_SIZE
+        // 1. Load Cache for Instant UI
+        val cached = withContext(Dispatchers.IO) { repository.getCachedFeed() }
+        if (cached.isNotEmpty()) {
+            articles = cached
+        } else {
+            isLoading = true
+        }
+
+        // 2. Fetch Fresh Data (Background)
+        try {
+            val fresh = repository.fetchArticles(0)
+            if (fresh.isNotEmpty()) {
+                articles = fresh
+                hasMore = fresh.size >= DataRepository.PAGE_SIZE
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Feed", "Network Error: ${e.message}")
+        } finally {
+            isLoading = false
+        }
     }
     
     // ... (Scroll Listener) ...

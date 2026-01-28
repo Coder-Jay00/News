@@ -7,6 +7,8 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +59,7 @@ data class WatchlistEntry(
     val keyword: String
 )
 
-class DataRepository(context: Context) {
+class DataRepository(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     
     // Initialize Supabase (Anon Key is safe for public read-only)
@@ -118,6 +120,9 @@ class DataRepository(context: Context) {
                 }
             
             val list = response.decodeList<Article>()
+            if (page == 0 && list.isNotEmpty()) {
+                saveCachedFeed(list) // Cache the first page
+            }
             return list
             
         } catch (e: Exception) {
@@ -162,6 +167,35 @@ class DataRepository(context: Context) {
 
     // Legacy method for compatibility
     suspend fun fetchDailyBrief(): List<Article> = fetchArticles(0)
+
+    // Caching Logic (File-based JSON)
+    fun getCachedFeed(): List<Article> {
+        return try {
+            val file = java.io.File(context.cacheDir, "feed_cache.json")
+            if (file.exists()) {
+                val jsonString = file.readText()
+                val list = kotlinx.serialization.json.Json.decodeFromString<List<Article>>(jsonString)
+                android.util.Log.d("DataRepo", "Loaded ${list.size} articles from cache")
+                list
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("DataRepo", "Cache load failed: ${e.message}")
+            emptyList()
+        }
+    }
+
+    private fun saveCachedFeed(list: List<Article>) {
+        try {
+            val jsonString = kotlinx.serialization.json.Json.encodeToString(list)
+            val file = java.io.File(context.cacheDir, "feed_cache.json")
+            file.writeText(jsonString)
+            android.util.Log.d("DataRepo", "Saved ${list.size} articles to cache")
+        } catch (e: Exception) {
+            android.util.Log.e("DataRepo", "Cache save failed: ${e.message}")
+        }
+    }
 
     // Trigger Cloud Sync (GitHub Action via Vercel Relay)
     suspend fun triggerSync() {
