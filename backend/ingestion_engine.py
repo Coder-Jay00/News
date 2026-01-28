@@ -30,6 +30,7 @@ class IngestionEngine:
                 {"url": "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "category": "Entertainment", "source": "BBC Arts"},
                 {"url": "https://feeds.feedburner.com/ndtvnews-india-news", "category": "India News", "source": "NDTV"},
                 {"url": "https://feeds.feedburner.com/TheHackersNews", "category": "Cybersecurity", "source": "The Hacker News"},
+            ]
         }
 
     def fetch_rss_feed(self, url: str, category: str, source_name: str = "Unknown") -> List[Dict]:
