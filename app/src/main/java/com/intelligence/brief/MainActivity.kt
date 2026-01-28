@@ -132,7 +132,9 @@ class MainActivity : ComponentActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             if (downloadId == id) {
-                installApk(updateVersionState.value)
+                // Silent download finished. Now prompt user to install.
+                showUpdateDialogState.value = true
+                android.widget.Toast.makeText(context, "Update downloaded. Ready to install.", android.widget.Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -335,10 +337,16 @@ class MainActivity : ComponentActivity() {
                 
                 updateVersionState.value = version
                 updateUrlState.value = updateUrl
-                showUpdateDialogState.value = true
-            } else {
-                updateManager.deleteOldUpdates()
-            }
+                if (updateManager.isUpdateDownloaded(version)) {
+                    // Already downloaded -> Prompt to Install
+                    showUpdateDialogState.value = true
+                } else {
+                    // Not downloaded -> Silent Download
+                    downloadId = updateManager.triggerUpdate(updateUrl, version)
+                    android.util.Log.d("Update", "Silently starting download for $version")
+                    // Do NOT show dialog yet
+                }
+        }
         }
     }
 

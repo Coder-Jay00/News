@@ -15,8 +15,8 @@ android {
         applicationId = "com.intelligence.brief"
         minSdk = 24
         targetSdk = 34
-        versionCode = 22
-        versionName = "2.1.0"
+        versionCode = 23
+        versionName = "2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
