@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.intelligence.brief.app-mergeDebugResources-65:/values/values.xml",
+            "outputFile": "com.intelligence.brief.app-mergeDebugResources-66:/values/values.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\126e8f7be7117d8603eb59acc5ec864d\\workspace\\transformed\\work-runtime-2.9.0\\res\\values\\values.xml",
@@ -18,6 +18,23 @@
                         "startOffsets": "210,275,345,409",
                         "endColumns": "64,69,63,60",
                         "endOffsets": "270,340,404,465"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\79b0e972dfab7ed46a3001b88517f9aa\\workspace\\transformed\\lifecycle-viewmodel-release\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "49",
+                        "endOffsets": "100"
+                    },
+                    "to": {
+                        "startLines": "114",
+                        "startColumns": "4",
+                        "startOffsets": "7137",
+                        "endColumns": "49",
+                        "endOffsets": "7182"
                     }
                 },
                 {
@@ -90,23 +107,6 @@
                         "startOffsets": "5888,6012",
                         "endColumns": "53,66",
                         "endOffsets": "5937,6074"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\efaba2055f86278f53765c987121a30a\\workspace\\transformed\\lifecycle-viewmodel-release\\res\\values\\values.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "49",
-                        "endOffsets": "100"
-                    },
-                    "to": {
-                        "startLines": "114",
-                        "startColumns": "4",
-                        "startOffsets": "7137",
-                        "endColumns": "49",
-                        "endOffsets": "7182"
                     }
                 },
                 {
@@ -305,6 +305,23 @@
                     }
                 },
                 {
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\73779b924db174b387bebb6316401652\\workspace\\transformed\\lifecycle-runtime-release\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "42",
+                        "endOffsets": "93"
+                    },
+                    "to": {
+                        "startLines": "111",
+                        "startColumns": "4",
+                        "startOffsets": "6980",
+                        "endColumns": "42",
+                        "endOffsets": "7018"
+                    }
+                },
+                {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\28ed6ce6903744e2112bcad761806aa9\\workspace\\transformed\\firebase-messaging-25.0.1\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -336,23 +353,6 @@
                         "startOffsets": "5619",
                         "endColumns": "49",
                         "endOffsets": "5664"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\a21a77249f6fbd81715e78103a3f9b8a\\workspace\\transformed\\lifecycle-runtime-release\\res\\values\\values.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "42",
-                        "endOffsets": "93"
-                    },
-                    "to": {
-                        "startLines": "111",
-                        "startColumns": "4",
-                        "startOffsets": "6980",
-                        "endColumns": "42",
-                        "endOffsets": "7018"
                     }
                 }
             ]

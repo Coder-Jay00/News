@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.intelligence.brief.app-mergeDebugResources-65:/values-bs/values-bs.xml",
+            "outputFile": "com.intelligence.brief.app-mergeDebugResources-66:/values-bs/values-bs.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\7d1526a8ed20d4428e64ea6f24a6931b\\workspace\\transformed\\material3-release\\res\\values-bs\\values-bs.xml",

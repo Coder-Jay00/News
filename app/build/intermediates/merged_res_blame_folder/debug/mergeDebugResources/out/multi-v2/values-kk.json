@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.intelligence.brief.app-mergeDebugResources-65:/values-kk/values-kk.xml",
+            "outputFile": "com.intelligence.brief.app-mergeDebugResources-66:/values-kk/values-kk.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\5af40e707451c99249573d0ba0210830\\workspace\\transformed\\core-1.12.0\\res\\values-kk\\values-kk.xml",

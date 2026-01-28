@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -193,6 +196,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Theme state: null = follow device system theme (default behavior)
             var isDarkMode by remember { mutableStateOf<Boolean?>(null) }
+            
+            // Monitor Lifecycle for periodic update checks
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner) {
+                val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                        checkForUpdates()
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            }
             val showUpdateDialog by remember { showUpdateDialogState }
             val updateUrl by remember { updateUrlState }
             
@@ -667,7 +682,7 @@ fun FeedScreen(
             val layoutInfo = listState.layoutInfo
             val totalItems = layoutInfo.totalItemsCount
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisibleIndex >= totalItems - 3 
+            lastVisibleIndex >= totalItems - 5 
         }.collect { nearBottom ->
             if (nearBottom && hasMore && !isLoading && !isRefreshing && articles.isNotEmpty()) {
                 isLoading = true

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.intelligence.brief.app-mergeDebugResources-65:/values-ca/values-ca.xml",
+            "outputFile": "com.intelligence.brief.app-mergeDebugResources-66:/values-ca/values-ca.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.1.0\\transforms\\6948f15e8f384245bfd50e161fd0e6b0\\workspace\\transformed\\play-services-base-18.5.0\\res\\values-ca\\values.xml",
