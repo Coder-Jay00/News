@@ -708,6 +708,7 @@ fun NewsCard(article: Article) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(article.source, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(" • ${article.category}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(" • ${getRelativeTime(article.published)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 Spacer(Modifier.weight(1f))
                 

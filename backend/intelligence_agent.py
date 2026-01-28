@@ -130,6 +130,10 @@ class IntelligenceAgent:
 
 if __name__ == "__main__":
     # Test Run
+    from dotenv import load_dotenv
+    if os.path.exists("backend/.env"): load_dotenv("backend/.env")
+    else: load_dotenv()
+    
     agent = IntelligenceAgent()
     sample = {
         "title": "NVIDIA announces new H200 GPU architecture",
