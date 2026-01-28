@@ -8,21 +8,21 @@ class IngestionEngine:
     def __init__(self):
         self.sources = {
             "friendly_sources": [
-                # --- AGGREGATORS (The Backups) ---
-                {"url": "https://www.bing.com/news/search?q=technology+AI&format=rss", "category": "Tech & AI", "source": "Bing News"},
-                {"url": "https://news.yahoo.com/rss/tech", "category": "Tech", "source": "Yahoo News"},
+                # --- AGGREGATORS ---
+                {"url": "https://www.bing.com/news/search?q=technology+AI&format=rss", "category": "AI & Frontiers", "source": "Bing News"},
+                {"url": "https://news.yahoo.com/rss/tech", "category": "Technology", "source": "Yahoo News"},
                 
-                # --- DIRECT PUBLISHERS (High Trust) ---
-                {"url": "https://techcrunch.com/feed/", "category": "Startups & VC", "source": "TechCrunch"},
-                {"url": "https://www.theverge.com/rss/index.xml", "category": "Consumer Tech", "source": "The Verge"},
-                {"url": "https://www.wired.com/feed/rss", "category": "Future & Science", "source": "Wired"},
-                {"url": "http://feeds.arstechnica.com/arstechnica/index", "category": "IT & Policy", "source": "Ars Technica"},
-                {"url": "https://feeds.feedburner.com/VentureBeat", "category": "AI & Enterprise", "source": "VentureBeat"},
+                # --- DIRECT PUBLISHERS ---
+                {"url": "https://techcrunch.com/feed/", "category": "Business", "source": "TechCrunch"},
+                {"url": "https://www.theverge.com/rss/index.xml", "category": "Technology", "source": "The Verge"},
+                {"url": "https://www.wired.com/feed/rss", "category": "Science", "source": "Wired"},
+                {"url": "http://feeds.arstechnica.com/arstechnica/index", "category": "Technology", "source": "Ars Technica"},
+                {"url": "https://feeds.feedburner.com/VentureBeat", "category": "AI & Frontiers", "source": "VentureBeat"},
                 
                 # --- GLOBAL/BUSINESS ---
-                {"url": "http://feeds.bbci.co.uk/news/technology/rss.xml", "category": "Global Tech", "source": "BBC News"},
-                {"url": "https://www.cnbc.com/id/19854910/device/rss/rss.html", "category": "Business Tech", "source": "CNBC"},
-                {"url": "https://www.aljazeera.com/xml/rss/all.xml", "category": "Global News", "source": "Al Jazeera"},
+                {"url": "http://feeds.bbci.co.uk/news/technology/rss.xml", "category": "World News", "source": "BBC News"},
+                {"url": "https://www.cnbc.com/id/19854910/device/rss/rss.html", "category": "Business", "source": "CNBC"},
+                {"url": "https://www.aljazeera.com/xml/rss/all.xml", "category": "World News", "source": "Al Jazeera"},
             ]
         }
 
@@ -102,7 +102,7 @@ class IngestionEngine:
                     "published": entry.get('pubDate', str(datetime.datetime.now())),
                     "summary": entry.get('description', ""),
                     "source": entry.get('source_id', "NewsData"),
-                    "category": "Tech", # Simplified mapping
+                    "category": "AI & Frontiers", # Simplified mapping
                     "tier": 1,
                     "trust_badge": "Official", # Assume high trust for Tier 1
                     "icon": "shield"
