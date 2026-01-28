@@ -32,7 +32,9 @@ data class Article(
     @SerialName("trust_score")
     val trustScore: Int? = null,
     @SerialName("trust_reason")
-    val trustReason: String? = null
+    val trustReason: String? = null,
+    @SerialName("related_links")
+    val relatedLinks: List<String>? = null
 )
 
 // Feature 9: Morning Reel Model
