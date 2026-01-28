@@ -641,7 +641,7 @@ fun FeedScreen(
                 title = { 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Brief.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                        Text("v1.2.9 Intelligence", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                        Text("v${BuildConfig.VERSION_NAME} Intelligence", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                     }
                 },
                 navigationIcon = {
