@@ -226,7 +226,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                         showUpdateDialogState.value = false
                                     }) {
-                                        Text(if (alreadyDownloaded) "Install" else "Download")
+                                        Text(if (alreadyDownloaded) "Install" else "Update")
                                     }
                                 },
                                 dismissButton = {

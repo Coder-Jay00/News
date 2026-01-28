@@ -101,22 +101,44 @@ def main():
     # -----------------------------------
     if processed_articles:
         print("\n--- FEATURE 9: GENERATING MORNING REEL (DIVERSE) ---")
-        # Group by Category and pick Top 1 from each
-        categories = {}
-        for art in processed_articles:
-            cat = art.get('category', 'General')
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append(art)
         
+        # Strategy: Fetch top 1 article from each known category in the last 24h from DB
+        # This ensures diversity even if the current ingestion batch was homogenous
+        target_categories = ["World News", "Technology", "Business", "Science", "Health", "Sports", "Entertainment", "India News", "AI & Frontiers"]
         diverse_selection = []
-        for cat, arts in categories.items():
-            # Sort by score desc, pick top 1
-            top_art = sorted(arts, key=lambda x: x.get('trust_score', 0), reverse=True)[0]
-            diverse_selection.append(top_art)
-            
-        # Limit to 7 stories max to keep it a "Brief"
-        final_reel_stories = diverse_selection[:7]
+        
+        print("Fetching Top Story for each category from DB...")
+        for cat in target_categories:
+            try:
+                # Get the single highest rated article for this category from top 50 recent
+                res = db.client.from_('articles')\
+                    .select('*')\
+                    .eq('category', cat)\
+                    .order('trust_score', desc=True)\
+                    .limit(1)\
+                    .execute()
+                
+                if res.data and len(res.data) > 0:
+                    diverse_selection.append(res.data[0])
+            except Exception as e:
+                print(f"Failed to fetch for {cat}: {e}")
+                continue
+
+        # If DB fetch yields too few, fallback to current batch top scorers
+        if len(diverse_selection) < 3:
+             print("Warning: DB Diversity fetch low. Falling back to mixed mode.")
+             sorted_current = sorted(processed_articles, key=lambda x: x.get('trust_score', 0), reverse=True)
+             diverse_selection.extend(sorted_current[:3])
+        
+        # Deduplicate by link
+        seen = set()
+        final_list = []
+        for art in diverse_selection:
+            if art['link'] not in seen:
+                final_list.append(art)
+                seen.add(art['link'])
+
+        final_reel_stories = final_list[:7]
         
         reel_content = {
             "title": f"The Daily Pulse • {datetime.datetime.now().strftime('%I:%M %p')}",
