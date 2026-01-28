@@ -23,7 +23,13 @@ class IngestionEngine:
                 {"url": "http://feeds.bbci.co.uk/news/technology/rss.xml", "category": "World News", "source": "BBC News"},
                 {"url": "https://www.cnbc.com/id/19854910/device/rss/rss.html", "category": "Business", "source": "CNBC"},
                 {"url": "https://www.aljazeera.com/xml/rss/all.xml", "category": "World News", "source": "Al Jazeera"},
-            ]
+                
+                # --- EXPANDED CATEGORIES ---
+                {"url": "http://feeds.bbci.co.uk/sport/rss.xml", "category": "Sports", "source": "BBC Sport"},
+                {"url": "http://feeds.bbci.co.uk/news/health/rss.xml", "category": "Health", "source": "BBC Health"},
+                {"url": "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "category": "Entertainment", "source": "BBC Arts"},
+                {"url": "https://feeds.feedburner.com/ndtvnews-india-news", "category": "India News", "source": "NDTV"},
+                {"url": "https://feeds.feedburner.com/TheHackersNews", "category": "Cybersecurity", "source": "The Hacker News"},
         }
 
     def fetch_rss_feed(self, url: str, category: str, source_name: str = "Unknown") -> List[Dict]:
@@ -120,8 +126,8 @@ class IngestionEngine:
         # Shuffle sources to ensure category diversity in every run
         sources = self.sources["friendly_sources"].copy()
         
-        # Pick 5 random sources to fetch per run (avoid timeout/overload)
-        selected_sources = random.sample(sources, min(len(sources), 5)) 
+        # Pick 10 random sources to fetch per run (better coverage)
+        selected_sources = random.sample(sources, min(len(sources), 10)) 
         
         print(f"--- Fetching from {len(selected_sources)} Sources ---")
         

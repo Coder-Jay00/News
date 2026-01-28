@@ -750,13 +750,9 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
         "AI & Frontiers", "Cybersecurity"
     )
     
-    // Auto-detect Country
-    val currentCountry = java.util.Locale.getDefault().country
+    // Default: Select ALL categories so user doesn't miss anything (User Request)
     val defaultSelection = remember {
-        val list = mutableListOf<String>()
-        if (currentCountry.equals("IN", ignoreCase = true)) list.add("India News")
-        list.add("World News")
-        mutableStateListOf(*list.toTypedArray())
+        mutableStateListOf(*options.toTypedArray())
     }
     
     val selected = defaultSelection
