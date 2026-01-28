@@ -10,9 +10,9 @@ class IntelligenceAgent:
             print("ERROR: GEMINI_API_KEY is missing or contains a placeholder!")
         else:
             genai.configure(api_key=api_key)
-            # Use pinned version to avoid 404 on v1beta alias lookup
-            self.model = genai.GenerativeModel('gemini-1.5-flash-001')
-            print("Intelligence Agent initialized (Model: gemini-1.5-flash-001)")
+            # Fallback to classic Pro model
+            self.model = genai.GenerativeModel('gemini-pro')
+            print("Intelligence Agent initialized (Model: gemini-pro)")
 
     def analyze_article(self, article: Dict) -> Dict:
         """
@@ -75,11 +75,23 @@ class IntelligenceAgent:
             
         except Exception as e:
             print(f"Error analyzing {article['title']}: {e}")
-            article["ai_summary"] = "Analysis Failed"
-            article["trust_badge"] = "News"
-            article["icon"] = "alert-circle"
-            article["trust_score"] = 50
-            article["trust_reason"] = "Analysis failed."
+            # Heuristic Fallback (Source-based)
+            source = article.get('source', '').lower()
+            if any(x in source for x in ['google', 'microsoft', 'apple', 'meta', 'official', 'blog']):
+                article["trust_score"] = 95
+                article["trust_badge"] = "Official"
+                article["trust_reason"] = "Official Source (Heuristic)"
+            elif any(x in source for x in ['techcrunch', 'verge', 'wired', 'reuters', 'bbc', 'venturebeat']):
+                article["trust_score"] = 90
+                article["trust_badge"] = "Trusted"
+                article["trust_reason"] = "Reputable Publisher (Heuristic)"
+            else:
+                article["trust_score"] = 75
+                article["trust_badge"] = "News"
+                article["trust_reason"] = "Standard Reporting (Heuristic)"
+            
+            article["ai_summary"] = article.get("summary", "Analysis Unavailable")
+            article["icon"] = "file-text"
 
         return article
 
