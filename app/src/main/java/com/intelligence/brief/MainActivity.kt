@@ -212,26 +212,45 @@ class MainActivity : ComponentActivity() {
                             val targetVersion = updateVersionState.value
                             val alreadyDownloaded = updateManager.isUpdateDownloaded(targetVersion)
                             
+                            // Feature: Download Progress UX
+                            var isDownloading by remember { mutableStateOf(false) }
+
                             AlertDialog(
-                                onDismissRequest = { showUpdateDialogState.value = false },
-                                title = { Text("Update Available") },
-                                text = { Text("A new version of Brief. ($targetVersion) is ready. Would you like to ${if (alreadyDownloaded) "install" else "download"} it now?") },
-                                confirmButton = {
-                                    Button(onClick = {
-                                        if (alreadyDownloaded) {
-                                            installApk(targetVersion)
-                                        } else {
-                                            downloadId = updateManager.triggerUpdate(updateUrl!!, targetVersion)
-                                            android.widget.Toast.makeText(this@MainActivity, "Downloading $targetVersion in background...", android.widget.Toast.LENGTH_SHORT).show()
+                                onDismissRequest = { if (!isDownloading) showUpdateDialogState.value = false },
+                                title = { Text(if (isDownloading) "Downloading Update..." else "Update Available") },
+                                text = { 
+                                    Column {
+                                        Text("A new version of Brief. ($targetVersion) is ready.")
+                                        if (isDownloading) {
+                                            Spacer(Modifier.height(16.dp))
+                                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                            Spacer(Modifier.height(8.dp))
+                                            Text("Please wait...", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                                         }
-                                        showUpdateDialogState.value = false
-                                    }) {
-                                        Text(if (alreadyDownloaded) "Install" else "Update")
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(
+                                        enabled = !isDownloading,
+                                        onClick = {
+                                            if (alreadyDownloaded) {
+                                                installApk(targetVersion)
+                                                showUpdateDialogState.value = false
+                                            } else {
+                                                isDownloading = true
+                                                downloadId = updateManager.triggerUpdate(updateUrl!!, targetVersion)
+                                                // Keep dialog open to show progress
+                                            }
+                                        }
+                                    ) {
+                                        Text(if (alreadyDownloaded) "Install" else if (isDownloading) "Downloading..." else "Update")
                                     }
                                 },
                                 dismissButton = {
-                                    TextButton(onClick = { showUpdateDialogState.value = false }) {
-                                        Text("Later")
+                                    if (!isDownloading) {
+                                        TextButton(onClick = { showUpdateDialogState.value = false }) {
+                                            Text("Later")
+                                        }
                                     }
                                 }
                             )
