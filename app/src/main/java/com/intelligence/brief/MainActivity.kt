@@ -13,6 +13,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -782,7 +783,12 @@ fun FeedScreen(
                          if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
                      }
                  }
-                 PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
+                 PullToRefreshContainer(
+                     state = pullToRefreshState, 
+                     modifier = Modifier.align(Alignment.TopCenter),
+                     containerColor = MaterialTheme.colorScheme.surface,
+                     contentColor = MaterialTheme.colorScheme.primary
+                 )
              }
          }
     }
@@ -811,13 +817,19 @@ fun NewsCard(article: Article) {
                 // Feature 5: Trust Score Display
                 if (article.trustScore != null) {
                     val color = if (article.trustScore >= 80) Color(0xFF4CAF50) else if (article.trustScore >= 50) Color(0xFFFFC107) else Color(0xFFF44336)
-                    Surface(color = color.copy(alpha=0.1f), shape = RoundedCornerShape(4.dp)) {
-                        Text(
-                            text = "${article.trustScore}% Trust",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = color,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                    Surface(
+                         color = color.copy(alpha=0.15f), 
+                         shape = RoundedCornerShape(50), 
+                         border = BorderStroke(1.dp, color.copy(alpha=0.3f))
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                            Text(
+                                text = "★ ${article.trustScore}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = color
+                            )
+                        }
                     }
                 }
             }
