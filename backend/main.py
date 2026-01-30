@@ -104,7 +104,11 @@ def main():
         
         # Strategy: Fetch top 1 article from each known category in the last 24h from DB
         # This ensures diversity even if the current ingestion batch was homogenous
-        target_categories = ["World News", "Technology", "Business", "Science", "Health", "Sports", "Entertainment", "India News", "AI & Frontiers"]
+        target_categories = [
+            "World News", "Technology", "Business", "Science", "Health", 
+            "Sports", "Entertainment", "India News", "AI & Frontiers", 
+            "Politics", "Cybersecurity"
+        ]
         diverse_selection = []
         
         print("Fetching Top Story for each category from DB...")
@@ -141,7 +145,7 @@ def main():
                 final_list.append(art)
                 seen.add(art['link'])
 
-        final_reel_stories = final_list[:7]
+        final_reel_stories = final_list[:15]
         
         reel_content = {
             "title": f"The Daily Pulse • {datetime.datetime.now().strftime('%I:%M %p')}",
