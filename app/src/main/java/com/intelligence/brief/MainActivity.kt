@@ -602,9 +602,11 @@ fun AppNavigator(
 
     when (currentScreen) {
         "settings" -> {
+            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
             SettingsScreen(
                 repository = repository,
-                onBack = { currentScreen = "feed" }
+                onBack = { currentScreen = "feed" },
+                onOpenUrl = { url -> uriHandler.openUri(url) }
             )
         }
         "reel" -> {
@@ -989,7 +991,8 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
 @Composable
 fun SettingsScreen(
     repository: DataRepository,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenUrl: (String) -> Unit
 ) {
     val allCategories = listOf("India News", "World News", "Business", "Technology", "Science", "Health", "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity")
     val currentInterests = repository.getInterests()
@@ -1101,7 +1104,7 @@ fun SettingsScreen(
                          Card(
                              modifier = Modifier.width(200.dp).height(120.dp),
                              colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                             onClick = { /* TODO: Open Article in Sheet/Browser */ }
+                             onClick = { onOpenUrl(article.link) } // FIXED: Opens URL
                          ) {
                              Column(modifier = Modifier.padding(12.dp)) {
                                  Text(article.title, maxLines = 3, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
@@ -1131,7 +1134,8 @@ fun SettingsScreen(
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(history) { article ->
                          ListItem(
-                             headlineContent = { Text(article.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                             modifier = Modifier.clickable { onOpenUrl(article.link) }, // FIXED: Clickable
+                             headlineContent = { Text(article.title, maxLines = 2, overflow = TextOverflow.Ellipsis) }, // FIXED: 2 lines
                              supportingContent = { Text("${article.source} • ${getRelativeTime(article.published)}") },
                              leadingContent = { Text("🕒") }
                          )
