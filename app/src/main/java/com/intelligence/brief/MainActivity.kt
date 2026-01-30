@@ -43,7 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.Locale
 import java.util.* 
-import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.unit.sp
@@ -499,7 +499,7 @@ fun MorningReelScreen(
             } else {
                 val stories = reel!!.stories
                 
-                VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
                     val story = stories[page]
                     
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -567,8 +567,8 @@ fun MorningReelScreen(
                                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("Swipe Up for Next Story", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.labelSmall)
-                                Text("↓", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.titleMedium)
+                                Text("Swipe Left for Next Story", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.labelSmall)
+                                Text("→", color = Color.Gray.copy(alpha=0.7f), style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
