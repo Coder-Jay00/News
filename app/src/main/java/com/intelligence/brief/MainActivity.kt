@@ -771,6 +771,9 @@ fun FeedScreen(
                  }
              }
 
+             var selectedArticle by remember { mutableStateOf<Article?>(null) }
+             val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+
              Box(modifier = Modifier.fillMaxSize()) {
                  if (articles.isEmpty() && isLoading) {
                      // Skeleton Loading State
@@ -785,11 +788,22 @@ fun FeedScreen(
                  } else {
                      LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
                          items(articles) { article ->
-                             NewsCard(article)
+                             NewsCard(article, onClick = { selectedArticle = article })
                              Spacer(modifier = Modifier.height(12.dp))
                          }
                          if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
                      }
+                 }
+                 
+                 // Smart Detail Sheet
+                 if (selectedArticle != null) {
+                     NewsDetailSheet(
+                         article = selectedArticle!!,
+                         onReadMore = { link -> 
+                             uriHandler.openUri(link)
+                         },
+                         onDismiss = { selectedArticle = null }
+                     )
                  }
              }
          }
@@ -798,14 +812,12 @@ fun FeedScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsCard(article: Article) {
-    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-
+fun NewsCard(article: Article, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth().clickable { uriHandler.openUri(article.link) }
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header
