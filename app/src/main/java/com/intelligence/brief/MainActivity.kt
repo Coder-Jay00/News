@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 
@@ -638,10 +639,12 @@ fun FeedScreen(
     var isLoading by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var hasMore by remember { mutableStateOf(true) }
+    var selectedCategory by remember { mutableStateOf("All") }
+    val categories = listOf("All", "India News", "World News", "Business", "Technology", "Science", "Health", "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity")
+
     val scope = rememberCoroutineScope()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
-    // Refresh function - reloads from scratch
     // Refresh function - reloads from scratch
     fun refresh() {
         scope.launch {
@@ -649,7 +652,7 @@ fun FeedScreen(
             repository.triggerSync()
             delay(2000) // Visual Feedback Delay
             currentPage = 0
-            val newArticles = repository.fetchArticles(0)
+            val newArticles = repository.fetchArticles(0, selectedCategory)
             if (newArticles.isNotEmpty()) {
                 articles = newArticles
                 hasMore = newArticles.size >= DataRepository.PAGE_SIZE
@@ -659,18 +662,20 @@ fun FeedScreen(
     }
 
     // Initial load
-    LaunchedEffect(true) {
-        val cached = withContext(Dispatchers.IO) { repository.getCachedFeed() }
-        if (cached.isNotEmpty()) {
-            articles = cached
-        } else {
-            isLoading = true
-        }
-
+    LaunchedEffect(selectedCategory) {
+        isLoading = true
+        currentPage = 0
+        hasMore = true
+        articles = emptyList() // Clear current list when switching category
+        
         try {
-            // Short delay to ensure cache doesn't flash too fast if empty
-            delay(300)
-            val fresh = repository.fetchArticles(0)
+            // Load cache only if "All" is selected (since cache is mixed)
+            if (selectedCategory == "All") {
+                 val cached = withContext(Dispatchers.IO) { repository.getCachedFeed() }
+                 if (cached.isNotEmpty()) articles = cached
+            }
+
+            val fresh = repository.fetchArticles(0, selectedCategory)
             if (fresh.isNotEmpty()) {
                 articles = fresh
                 hasMore = fresh.size >= DataRepository.PAGE_SIZE
@@ -693,7 +698,7 @@ fun FeedScreen(
             if (nearBottom && hasMore && !isLoading && !isRefreshing && articles.isNotEmpty()) {
                 isLoading = true
                 currentPage++
-                val moreArticles = repository.fetchArticles(currentPage)
+                val moreArticles = repository.fetchArticles(currentPage, selectedCategory)
                 if (moreArticles.isEmpty()) { hasMore = false } 
                 else { 
                     // Deduplicate to prevent repeated entries
@@ -733,32 +738,53 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        // ... (Existing Box/LazyColumn logic unchanged, just passing articles to NewsCard) ...
-         val pullToRefreshState = rememberPullToRefreshState()
-        
-        LaunchedEffect(pullToRefreshState.isRefreshing) {
-            if (pullToRefreshState.isRefreshing) {
-                refresh()
-                pullToRefreshState.endRefresh()
-            }
-        }
+         // Feature: YouTube-style Category Filter Chips
+         Column(modifier = Modifier.padding(padding)) {
+             LazyRow(
+                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                 contentPadding = PaddingValues(horizontal = 16.dp),
+                 horizontalArrangement = Arrangement.spacedBy(8.dp)
+             ) {
+                 items(categories) { category ->
+                     val isSelected = selectedCategory == category
+                     FilterChip(
+                         selected = isSelected,
+                         onClick = { selectedCategory = category },
+                         label = { Text(category) },
+                         colors = FilterChipDefaults.filterChipColors(
+                             selectedContainerColor = MaterialTheme.colorScheme.primary,
+                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                         )
+                     )
+                 }
+             }
 
-        Box(modifier = Modifier.fillMaxSize().padding(padding).nestedScroll(pullToRefreshState.nestedScrollConnection)) {
-            if (articles.isEmpty() && isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
-            } else if (articles.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found\nPull down to refresh") }
-            } else {
-                LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
-                    items(articles) { article ->
-                        NewsCard(article)
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                    if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
-                }
-            }
-            PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
-        }
+             val pullToRefreshState = rememberPullToRefreshState()
+            
+             LaunchedEffect(pullToRefreshState.isRefreshing) {
+                 if (pullToRefreshState.isRefreshing) {
+                     refresh()
+                     pullToRefreshState.endRefresh()
+                 }
+             }
+    
+             Box(modifier = Modifier.fillMaxSize().nestedScroll(pullToRefreshState.nestedScrollConnection)) {
+                 if (articles.isEmpty() && isLoading) {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+                 } else if (articles.isEmpty()) {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found\nPull down to refresh") }
+                 } else {
+                     LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
+                         items(articles) { article ->
+                             NewsCard(article)
+                             Spacer(modifier = Modifier.height(12.dp))
+                         }
+                         if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
+                     }
+                 }
+                 PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
+             }
+         }
     }
 }
 
