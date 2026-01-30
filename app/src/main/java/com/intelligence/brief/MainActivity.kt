@@ -631,7 +631,7 @@ fun AppNavigator(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FeedScreen(
     repository: DataRepository,
@@ -771,39 +771,85 @@ fun FeedScreen(
                  }
              }
 
+             val pagerState = rememberPagerState(pageCount = { categories.size })
+             val scope = rememberCoroutineScope()
              var selectedArticle by remember { mutableStateOf<Article?>(null) }
              val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-
-             Box(modifier = Modifier.fillMaxSize()) {
-                 if (articles.isEmpty() && isLoading) {
-                     // Skeleton Loading State
-                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                         items(6) {
-                             NewsCardSkeleton()
-                             Spacer(modifier = Modifier.height(12.dp))
-                         }
-                     }
-                 } else if (articles.isEmpty()) {
-                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found") }
-                 } else {
-                     LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
-                         items(articles) { article ->
-                             NewsCard(article, onClick = { selectedArticle = article })
-                             Spacer(modifier = Modifier.height(12.dp))
-                         }
-                         if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
-                     }
+             
+             // Sync: Chip Click -> Pager Scroll
+             LaunchedEffect(selectedCategory) {
+                 val index = categories.indexOf(selectedCategory)
+                 if (index >= 0 && pagerState.currentPage != index) {
+                     pagerState.animateScrollToPage(index)
                  }
+             }
+
+             // Sync: Pager Swipe -> Chip Selection
+             LaunchedEffect(pagerState.currentPage) {
+                 val category = categories[pagerState.currentPage]
+                 if (selectedCategory != category) {
+                     selectedCategory = category
+                 }
+             }
+
+             // Swipeable Feed Content
+             HorizontalPager(
+                 state = pagerState,
+                 modifier = Modifier.fillMaxSize()
+             ) { page ->
+                 // We need to fetch/filter articles for *this* page's category
+                 // Optimization: Note that 'articles' state currently holds *only* SelectedCategory's articles
+                 // To support true Pager, we strictly need to cache lists for *each* category or fetch on swipe.
+                 // For now, to keep it simple & fast: 
+                 // We will trigger the fetch when the page settles (via the LaunchedEffect above)
+                 // And show Loading/Content for the *current* selection.
+                 // Visually, adjacent pages might look empty/loading until settled.
+                 // Ideally we'd have a Map<Category, List<Article>>.
                  
-                 // Smart Detail Sheet
-                 if (selectedArticle != null) {
-                     NewsDetailSheet(
-                         article = selectedArticle!!,
-                         onReadMore = { link -> 
-                             uriHandler.openUri(link)
-                         },
-                         onDismiss = { selectedArticle = null }
-                     )
+                 // For v1 of Swipe: Just show the feed if it matches the page, or a loader.
+                 if (categories[page] == selectedCategory) {
+                     Box(modifier = Modifier.fillMaxSize()) {
+                         if (articles.isEmpty() && isLoading) {
+                             // Skeleton Loading State
+                             LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                                 items(6) {
+                                     NewsCardSkeleton()
+                                     Spacer(modifier = Modifier.height(12.dp))
+                                 }
+                             }
+                         } else if (articles.isEmpty()) {
+                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found") }
+                         } else {
+                             LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
+                                 items(articles) { article ->
+                                     NewsCard(article, onClick = { selectedArticle = article })
+                                     Spacer(modifier = Modifier.height(12.dp))
+                                 }
+                                 if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
+                             }
+                         }
+                         
+                         // Smart Detail Sheet
+                         if (selectedArticle != null) {
+                             NewsDetailSheet(
+                                 article = selectedArticle!!,
+                                 onReadMore = { link -> 
+                                     uriHandler.openUri(link)
+                                 },
+                                 onDismiss = { selectedArticle = null }
+                             )
+                         }
+                     }
+                 } else {
+                    // Off-screen pages (Skeleton placeholder)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                             items(3) {
+                                 NewsCardSkeleton()
+                                 Spacer(modifier = Modifier.height(12.dp))
+                             }
+                         }
+                    }
                  }
              }
          }
