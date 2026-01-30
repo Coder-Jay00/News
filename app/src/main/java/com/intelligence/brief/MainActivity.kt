@@ -771,16 +771,7 @@ fun FeedScreen(
                  }
              }
 
-             val pullToRefreshState = rememberPullToRefreshState()
-            
-             LaunchedEffect(pullToRefreshState.isRefreshing) {
-                 if (pullToRefreshState.isRefreshing) {
-                     refresh() // Suspends until done
-                     pullToRefreshState.endRefresh()
-                 }
-             }
-    
-             Box(modifier = Modifier.fillMaxSize().nestedScroll(pullToRefreshState.nestedScrollConnection)) {
+             Box(modifier = Modifier.fillMaxSize()) {
                  if (articles.isEmpty() && isLoading) {
                      // Skeleton Loading State
                      LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -790,7 +781,7 @@ fun FeedScreen(
                          }
                      }
                  } else if (articles.isEmpty()) {
-                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found\nPull down to refresh") }
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found") }
                  } else {
                      LazyColumn(state = listState, contentPadding = PaddingValues(16.dp)) {
                          items(articles) { article ->
@@ -800,12 +791,6 @@ fun FeedScreen(
                          if (isLoading && hasMore) { item { Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(modifier = Modifier.size(24.dp)) } } }
                      }
                  }
-                 PullToRefreshContainer(
-                     state = pullToRefreshState, 
-                     modifier = Modifier.align(Alignment.TopCenter),
-                     containerColor = MaterialTheme.colorScheme.surface,
-                     contentColor = MaterialTheme.colorScheme.primary
-                 )
              }
          }
     }
