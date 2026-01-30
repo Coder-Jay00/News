@@ -1021,7 +1021,7 @@ fun SettingsScreen(
                 title = { Text("SETTINGS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }, // Uppercase Title
                 navigationIcon = { 
                     IconButton(onClick = onBack) { 
-                        Text("Back", color = Color.White) // Safe Fallback
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White) 
                     } 
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -1042,7 +1042,7 @@ fun SettingsScreen(
                     label = { Text("Add Keyword (e.g. NVIDIA)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }, // Notifications -> Email
                     trailingIcon = {
                         if (watchlistKeyword.isNotEmpty()) {
                             IconButton(onClick = {
@@ -1052,7 +1052,7 @@ fun SettingsScreen(
                                     watchlistKeyword = ""
                                 }
                             }) {
-                                Text("ADD", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Filled.Add, contentDescription = "Add", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     },
@@ -1068,9 +1068,33 @@ fun SettingsScreen(
                 )
             }
             
-            // ... (Middle unchanged) ...
-            
-                // 3. BOOKMARKS
+            // 2. REGION (Segmented Control style)
+            SectionHeader("Edition")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf("Global", "India", "USA").forEach { region ->
+                    val isSelected = currentRegion == region
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { 
+                            repository.saveRegion(region)
+                            android.widget.Toast.makeText(context, "Edition: $region", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        label = { Text(region, fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal) },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                }
+            }
+
+            // 3. BOOKMARKS
             val bookmarks = repository.getBookmarks()
             if (bookmarks.isNotEmpty()) {
                 SectionHeader("Saved Briefs")
@@ -1096,8 +1120,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(Modifier.weight(1f))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Use Text or Emoji if Icon fails, but Default.Star is usually there. Let's use simple Text for safety if needed.
-                                    Text("💾", modifier = Modifier.size(12.dp)) 
+                                    Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                                     Spacer(Modifier.width(4.dp))
                                     Text(article.source, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                                 }
@@ -1126,7 +1149,12 @@ fun SettingsScreen(
                                  ) 
                              },
                              leadingContent = { 
-                                 Text("🕒", fontSize = 20.sp)
+                                 Icon(
+                                     Icons.Filled.DateRange, 
+                                     contentDescription = null, 
+                                     tint = Color.Gray, // Darker grey for subtlety
+                                     modifier = Modifier.size(20.dp)
+                                 ) 
                              },
                              trailingContent = {
                                  Text(
