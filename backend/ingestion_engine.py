@@ -30,6 +30,11 @@ class IngestionEngine:
                 {"url": "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "category": "Entertainment", "source": "BBC Arts"},
                 {"url": "https://feeds.feedburner.com/ndtvnews-india-news", "category": "India News", "source": "NDTV"},
                 {"url": "https://feeds.feedburner.com/TheHackersNews", "category": "Cybersecurity", "source": "The Hacker News"},
+                
+                # --- POLITICS ---
+                {"url": "http://feeds.bbci.co.uk/news/politics/rss.xml", "category": "Politics", "source": "BBC Politics"},
+                {"url": "https://rss.politico.com/politics-news.xml", "category": "Politics", "source": "Politico"},
+                {"url": "https://timesofindia.indiatimes.com/rssfeeds/1055598.cms", "category": "Politics", "source": "Times of India"},
             ]
         }
 

@@ -5,9 +5,14 @@ Sends push notifications to all Brief. app users when new articles are available
 Uses Firebase Admin SDK with service account authentication.
 """
 
-import firebase_admin
-from firebase_admin import credentials, messaging
 import os
+try:
+    import firebase_admin
+    from firebase_admin import credentials, messaging
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    print("[FCM] WARNING: firebase_admin module not found. Notifications disabled.")
+    FIREBASE_AVAILABLE = False
 
 # Path to service account JSON (relative to this file)
 SERVICE_ACCOUNT_PATH = os.path.join(os.path.dirname(__file__), "firebase-service-account.json")
@@ -18,6 +23,9 @@ _firebase_initialized = False
 def init_firebase():
     """Initialize Firebase Admin SDK if not already done"""
     global _firebase_initialized
+    if not FIREBASE_AVAILABLE:
+        return False
+
     if not _firebase_initialized:
         try:
             cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
