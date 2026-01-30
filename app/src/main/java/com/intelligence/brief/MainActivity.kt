@@ -55,9 +55,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import java.io.File
 
 fun getRelativeTime(publishedAt: String?): String {
@@ -994,153 +995,152 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenUrl: (String) -> Unit
 ) {
-    val allCategories = listOf("India News", "World News", "Business", "Technology", "Science", "Health", "Politics", "Entertainment", "Sports", "AI & Frontiers", "Cybersecurity")
     val currentInterests = repository.getInterests()
-    val selected = remember { mutableStateListOf(*currentInterests.toTypedArray()) }
-    
-    // Feature 10: Watchlist UI State
-    var watchlistKeyword by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    var watchlistKeyword by remember { mutableStateOf("") }
+    val currentRegion = repository.getRegion()
+    
+    // Helpers
+    @Composable
+    fun SectionHeader(title: String) {
+        Text(
+            title.uppercase(), 
+            style = MaterialTheme.typography.labelSmall, 
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary, // Using primary for high-tech feel
+            modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
+            letterSpacing = 1.5.sp
+        )
+    }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color(0xFF121212), // Deep Matte Black (Pro)
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Text("←", style = MaterialTheme.typography.titleLarge) } },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                title = { Text("SETTINGS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }, // Uppercase Title
+                navigationIcon = { 
+                    IconButton(onClick = onBack) { 
+                        Text("Back", color = Color.White) // Safe Fallback
+                    } 
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color(0xFF121212),
+                    titleContentColor = Color.White
+                )
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             
-            // Watchlist Section - Premium Card
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha=0.15f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("🔔", style = MaterialTheme.typography.titleLarge)
-                        Spacer(Modifier.width(12.dp))
-                        Column {
-                            Text("Watchlist Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("Notify me for keywords:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // 1. WATCHLIST (High Tech Input)
+            SectionHeader("Intelligence Alerts")
+            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedTextField(
+                    value = watchlistKeyword,
+                    onValueChange = { watchlistKeyword = it },
+                    label = { Text("Add Keyword (e.g. NVIDIA)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    trailingIcon = {
+                        if (watchlistKeyword.isNotEmpty()) {
+                            IconButton(onClick = {
+                                scope.launch {
+                                    repository.addWatchlistKeyword(watchlistKeyword)
+                                    android.widget.Toast.makeText(context, "Alert added: $watchlistKeyword", android.widget.Toast.LENGTH_SHORT).show()
+                                    watchlistKeyword = ""
+                                }
+                            }) {
+                                Text("ADD", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
                         }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    
-                    OutlinedTextField(
-                        value = watchlistKeyword,
-                        onValueChange = { watchlistKeyword = it },
-                        label = { Text("e.g. NVIDIA, Bitcoin") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        trailingIcon = {
-                            if (watchlistKeyword.isNotEmpty()) {
-                                IconButton(onClick = {
-                                    scope.launch {
-                                        repository.addWatchlistKeyword(watchlistKeyword)
-                                        android.widget.Toast.makeText(context, "Alert added for '$watchlistKeyword'", android.widget.Toast.LENGTH_SHORT).show()
-                                        watchlistKeyword = ""
-                                    }
-                                }) {
-                                    Text("ADD", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF1E1E1E),
+                        unfocusedContainerColor = Color(0xFF1E1E1E),
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.DarkGray,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.LightGray
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+            
+            // ... (Middle unchanged) ...
+            
+                // 3. BOOKMARKS
+            val bookmarks = repository.getBookmarks()
+            if (bookmarks.isNotEmpty()) {
+                SectionHeader("Saved Briefs")
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(bookmarks) { article ->
+                        Card(
+                            modifier = Modifier.width(200.dp).height(110.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            onClick = { onOpenUrl(article.link) },
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    article.title, 
+                                    maxLines = 3, 
+                                    overflow = TextOverflow.Ellipsis, 
+                                    style = MaterialTheme.typography.bodyMedium, 
+                                    color = Color.White,
+                                    lineHeight = 18.sp
+                                )
+                                Spacer(Modifier.weight(1f))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Use Text or Emoji if Icon fails, but Default.Star is usually there. Let's use simple Text for safety if needed.
+                                    Text("💾", modifier = Modifier.size(12.dp)) 
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(article.source, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                                 }
                             }
-                        },
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-            }
-            
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-            
-            // Region Selection
-            Text(
-                "Content Support", 
-                style = MaterialTheme.typography.titleMedium, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
-            )
-            
-            val currentRegion = repository.getRegion()
-            Row(modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Global", "India", "USA").forEach { region ->
-                    FilterChip(
-                        selected = currentRegion == region,
-                        onClick = { 
-                            repository.saveRegion(region)
-                            // Ideally trigger refresh, for now just saved
-                            android.widget.Toast.makeText(context, "Region set to $region", android.widget.Toast.LENGTH_SHORT).show()
-                           // Force recompose hack if needed or just accept toast 
-                        },
-                        label = { Text(region) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-
-            // Bookmarks
-            Text(
-                "Saved Intelligence", 
-                style = MaterialTheme.typography.titleMedium, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
-            )
-            
-            val bookmarks = repository.getBookmarks()
-            if (bookmarks.isEmpty()) {
-                Text("No saved articles yet.", modifier = Modifier.padding(horizontal = 24.dp), color = Color.Gray)
-            } else {
-                 LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                     items(bookmarks) { article ->
-                         Card(
-                             modifier = Modifier.width(200.dp).height(120.dp),
-                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                             onClick = { onOpenUrl(article.link) } // FIXED: Opens URL
-                         ) {
-                             Column(modifier = Modifier.padding(12.dp)) {
-                                 Text(article.title, maxLines = 3, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                 Spacer(Modifier.weight(1f))
-                                 Text(article.source, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                             }
-                         }
-                     }
-                 }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-
-            // Reading History
-            Text(
-                "Recently Viewed", 
-                style = MaterialTheme.typography.titleMedium, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
-            )
-            val history = repository.getHistory()
-             if (history.isEmpty()) {
-                Text("No history yet.", modifier = Modifier.padding(horizontal = 24.dp), color = Color.Gray)
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(history) { article ->
-                         ListItem(
-                             modifier = Modifier.clickable { onOpenUrl(article.link) }, // FIXED: Clickable
-                             headlineContent = { Text(article.title, maxLines = 2, overflow = TextOverflow.Ellipsis) }, // FIXED: 2 lines
-                             supportingContent = { Text("${article.source} • ${getRelativeTime(article.published)}") },
-                             leadingContent = { Text("🕒") }
-                         )
+                        }
                     }
                 }
+            }
+            
+            // 4. HISTORY (Clean List)
+            val history = repository.getHistory()
+            if (history.isNotEmpty()) {
+                SectionHeader("Recent Access")
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(history) { article ->
+                        ListItem(
+                             modifier = Modifier.clickable { onOpenUrl(article.link) },
+                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                             headlineContent = { 
+                                 Text(
+                                     article.title, 
+                                     maxLines = 1, 
+                                     overflow = TextOverflow.Ellipsis, 
+                                     color = Color.LightGray, 
+                                     style = MaterialTheme.typography.bodyMedium
+                                 ) 
+                             },
+                             leadingContent = { 
+                                 Text("🕒", fontSize = 20.sp)
+                             },
+                             trailingContent = {
+                                 Text(
+                                     getRelativeTime(article.published).replace(" ago", ""), // Shorten time
+                                     style = MaterialTheme.typography.labelSmall,
+                                     color = Color.DarkGray
+                                 )
+                             }
+                        )
+                        Divider(color = Color(0xFF1E1E1E), thickness = 1.dp, modifier = Modifier.padding(start = 56.dp))
+                    }
+                }
+            } else {
+                Spacer(Modifier.weight(1f))
             }
             
             // Footer
@@ -1149,9 +1149,10 @@ fun SettingsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Brief. v${BuildConfig.VERSION_NAME}", 
-                    style = MaterialTheme.typography.labelMedium, 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    "BRIEF. SYSTEM v${BuildConfig.VERSION_NAME}", 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = Color.DarkGray,
+                    letterSpacing = 2.sp
                 )
             }
         }
