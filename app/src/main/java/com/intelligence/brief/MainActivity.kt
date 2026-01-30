@@ -647,18 +647,23 @@ fun FeedScreen(
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
     // Refresh function - reloads from scratch
-    fun refresh() {
-        scope.launch {
+    // Refresh function - reloads from scratch
+    suspend fun refresh() {
+        withContext(Dispatchers.Main) {
             isRefreshing = true
+        }
+        withContext(Dispatchers.IO) {
             repository.triggerSync()
             delay(2000) // Visual Feedback Delay
-            currentPage = 0
             val newArticles = repository.fetchArticles(0, selectedCategory)
-            if (newArticles.isNotEmpty()) {
-                articles = newArticles
-                hasMore = newArticles.size >= DataRepository.PAGE_SIZE
+            withContext(Dispatchers.Main) {
+                currentPage = 0
+                if (newArticles.isNotEmpty()) {
+                    articles = newArticles
+                    hasMore = newArticles.size >= DataRepository.PAGE_SIZE
+                }
+                isRefreshing = false
             }
-            isRefreshing = false
         }
     }
 
@@ -764,7 +769,7 @@ fun FeedScreen(
             
              LaunchedEffect(pullToRefreshState.isRefreshing) {
                  if (pullToRefreshState.isRefreshing) {
-                     refresh()
+                     refresh() // Suspends until done
                      pullToRefreshState.endRefresh()
                  }
              }
