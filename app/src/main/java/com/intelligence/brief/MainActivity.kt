@@ -41,6 +41,12 @@ import com.intelligence.brief.ui.theme.BriefTheme
 import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import java.text.SimpleDateFormat
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.toSize
+import androidx.compose.animation.core.*
+import androidx.compose.ui.layout.onGloballyPositioned
 import java.util.TimeZone
 import java.util.Locale
 import java.util.* 
@@ -776,7 +782,13 @@ fun FeedScreen(
     
              Box(modifier = Modifier.fillMaxSize().nestedScroll(pullToRefreshState.nestedScrollConnection)) {
                  if (articles.isEmpty() && isLoading) {
-                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+                     // Skeleton Loading State
+                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                         items(6) {
+                             NewsCardSkeleton()
+                             Spacer(modifier = Modifier.height(12.dp))
+                         }
+                     }
                  } else if (articles.isEmpty()) {
                      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No articles found\nPull down to refresh") }
                  } else {
@@ -1030,5 +1042,69 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun NewsCardSkeleton() {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(width = 80.dp, height = 16.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(modifier = Modifier.size(width = 60.dp, height = 16.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+                Spacer(Modifier.weight(1f))
+                Box(modifier = Modifier.size(width = 40.dp, height = 20.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Title
+            Box(modifier = Modifier.fillMaxWidth(0.9f).height(24.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(modifier = Modifier.fillMaxWidth(0.7f).height(24.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Summary lines
+            Box(modifier = Modifier.fillMaxWidth().height(16.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(16.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(modifier = Modifier.fillMaxWidth(0.8f).height(16.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect())
+        }
+    }
+}
+
+fun Modifier.shimmerEffect(): Modifier = composed {
+    var size by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val startOffsetX by transition.animateFloat(
+        initialValue = -2 * size.width,
+        targetValue = 2 * size.width,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000)
+        ),
+        label = "shimmer"
+    )
+
+    background(
+        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+            colors = listOf(
+                Color.LightGray.copy(alpha = 0.6f),
+                Color.LightGray.copy(alpha = 0.2f),
+                Color.LightGray.copy(alpha = 0.6f)
+            ),
+            start = androidx.compose.ui.geometry.Offset(startOffsetX, 0f),
+            end = androidx.compose.ui.geometry.Offset(startOffsetX + size.width.toFloat(), size.height.toFloat())
+        )
+    ).onGloballyPositioned {
+        size = it.size.toSize()
     }
 }
