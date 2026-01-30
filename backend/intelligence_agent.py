@@ -28,18 +28,17 @@ class IntelligenceAgent:
             article["icon"] = "file-text"
             return article
 
-        prompt = f"""
-        You are an elite intelligence analyst for tech students. Analyze this news item:
+        You are an elite intelligence analyst. Analyze this news item:
         Title: {article['title']}
         Source: {article['source']}
-        Content Snippet: {article['summary'][:500]}
+        Content Snippet: {article['summary'][:800]}
 
         Output ONLY valid JSON with this structure:
         {{
-            "summary": "3 bullet points. concise. why it matters to a CS student.",
+            "summary": "A detailed, comprehensive analysis (approx 200-300 words). Use HTML tags (<br>, <b>) for formatting. Structure it as:\\n\\n<b>The Core Story</b>\\n[Paragraph explaining what happened]\\n\\n<b>Key Details</b>\\n[Bulleted list or detailed paragraph of facts]\\n\\n<b>Why It Matters</b>\\n[Analysis of impact/significance].",
             "trust_badge": "One of: [Official], [Technical], [Strategic], [News]",
             "icon": "A single Lucide icon name (e.g., 'cpu', 'shield-alert', 'globe', 'zap') that fits best.",
-            "trust_score": 85,  // Integer 0-100. 100=Official Docs, 80=Reputable News, 40=Rumor/Clickbait
+            "trust_score": 85,  // Integer 0-100. 100=Official Docs, 80=Reputable News.
             "trust_reason": "Brief explanation of the score."
         }}
         """
