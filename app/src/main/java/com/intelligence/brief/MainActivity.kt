@@ -831,9 +831,17 @@ fun FeedScreen(
                          
                          // Smart Detail Sheet
                          if (selectedArticle != null) {
+                             var isBookmarked by remember { mutableStateOf(repository.isBookmarked(selectedArticle!!.id)) }
+                             
                              NewsDetailSheet(
                                  article = selectedArticle!!,
+                                 isBookmarked = isBookmarked,
+                                 onToggleBookmark = {
+                                     repository.toggleBookmark(selectedArticle!!)
+                                     isBookmarked = !isBookmarked // Toggle UI instantly
+                                 },
                                  onReadMore = { link -> 
+                                     repository.addToHistory(selectedArticle!!) // Track History on Deep Dive
                                      uriHandler.openUri(link)
                                  },
                                  onDismiss = { selectedArticle = null }
@@ -1046,30 +1054,87 @@ fun SettingsScreen(
             
             Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             
+            // Region Selection
             Text(
-                "Customize Feed", 
+                "Content Support", 
                 style = MaterialTheme.typography.titleMedium, 
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
             )
             
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(allCategories) { category ->
-                    val isSelected = selected.contains(category)
-                    ListItem(
-                        headlineContent = { Text(category, fontWeight = FontWeight.Medium) },
-                        trailingContent = {
-                            Switch(
-                                checked = isSelected,
-                                onCheckedChange = { checked ->
-                                    if (checked) selected.add(category) else selected.remove(category)
-                                    repository.saveInterests(selected.toSet())
-                                }
-                            )
+            val currentRegion = repository.getRegion()
+            Row(modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Global", "India", "USA").forEach { region ->
+                    FilterChip(
+                        selected = currentRegion == region,
+                        onClick = { 
+                            repository.saveRegion(region)
+                            // Ideally trigger refresh, for now just saved
+                            android.widget.Toast.makeText(context, "Region set to $region", android.widget.Toast.LENGTH_SHORT).show()
+                           // Force recompose hack if needed or just accept toast 
                         },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        label = { Text(region) }
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+
+            // Bookmarks
+            Text(
+                "Saved Intelligence", 
+                style = MaterialTheme.typography.titleMedium, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
+            )
+            
+            val bookmarks = repository.getBookmarks()
+            if (bookmarks.isEmpty()) {
+                Text("No saved articles yet.", modifier = Modifier.padding(horizontal = 24.dp), color = Color.Gray)
+            } else {
+                 LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                     items(bookmarks) { article ->
+                         Card(
+                             modifier = Modifier.width(200.dp).height(120.dp),
+                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                             onClick = { /* TODO: Open Article in Sheet/Browser */ }
+                         ) {
+                             Column(modifier = Modifier.padding(12.dp)) {
+                                 Text(article.title, maxLines = 3, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                 Spacer(Modifier.weight(1f))
+                                 Text(article.source, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                             }
+                         }
+                     }
+                 }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+
+            // Reading History
+            Text(
+                "Recently Viewed", 
+                style = MaterialTheme.typography.titleMedium, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
+            )
+            val history = repository.getHistory()
+             if (history.isEmpty()) {
+                Text("No history yet.", modifier = Modifier.padding(horizontal = 24.dp), color = Color.Gray)
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(history) { article ->
+                         ListItem(
+                             headlineContent = { Text(article.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                             supportingContent = { Text("${article.source} • ${getRelativeTime(article.published)}") },
+                             leadingContent = { Text("🕒") }
+                         )
+                    }
                 }
             }
             

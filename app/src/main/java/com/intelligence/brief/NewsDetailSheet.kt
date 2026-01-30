@@ -16,7 +16,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsDetailSheet(article: Article, onReadMore: (String) -> Unit, onDismiss: () -> Unit) {
+fun NewsDetailSheet(
+    article: Article, 
+    isBookmarked: Boolean,
+    onReadMore: (String) -> Unit, 
+    onDismiss: () -> Unit,
+    onToggleBookmark: () -> Unit
+) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -30,7 +36,7 @@ fun NewsDetailSheet(article: Article, onReadMore: (String) -> Unit, onDismiss: (
                 .padding(bottom = 32.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header: Source & Time
+            // Header: Source & Time + Bookmark Action
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = article.source,
@@ -44,6 +50,13 @@ fun NewsDetailSheet(article: Article, onReadMore: (String) -> Unit, onDismiss: (
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = onToggleBookmark) {
+                    Text(
+                        text = if (isBookmarked) "🔖" else "🏷️", // Emoji fallback if icons missing
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))

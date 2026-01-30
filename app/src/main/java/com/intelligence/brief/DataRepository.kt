@@ -201,6 +201,64 @@ class DataRepository(private val context: Context) {
         }
     }
 
+    // Feature 6 (Retention): Region Preference
+    fun saveRegion(region: String) {
+        prefs.edit().putString("news_region", region).apply()
+    }
+
+    fun getRegion(): String {
+        return prefs.getString("news_region", "Global") ?: "Global"
+    }
+
+    // Feature 6 (Retention): Bookmarks System
+    fun getBookmarks(): List<Article> {
+        val json = prefs.getString("bookmarks", "[]") ?: "[]"
+        return try {
+            Json.decodeFromString(json)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun isBookmarked(articleId: String): Boolean {
+        return getBookmarks().any { it.id == articleId }
+    }
+
+    fun toggleBookmark(article: Article) {
+        val current = getBookmarks().toMutableList()
+        val index = current.indexOfFirst { it.id == article.id }
+        if (index != -1) {
+            current.removeAt(index) // Remove if exists
+        } else {
+            current.add(0, article) // Add to top if new
+        }
+        prefs.edit().putString("bookmarks", Json.encodeToString(current)).apply()
+    }
+
+    // Feature 6 (Retention): History System (Max 20)
+    fun getHistory(): List<Article> {
+        val json = prefs.getString("reading_history", "[]") ?: "[]"
+        return try {
+            Json.decodeFromString(json)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun addToHistory(article: Article) {
+        val current = getHistory().toMutableList()
+        // Remove duplicate if exists to move it to top
+        current.removeAll { it.id == article.id }
+        current.add(0, article)
+        
+        // Trim to max 20
+        if (current.size > 20) {
+            current.removeAt(current.lastIndex)
+        }
+        
+        prefs.edit().putString("reading_history", Json.encodeToString(current)).apply()
+    }
+
     // Trigger Cloud Sync (GitHub Action via Vercel Relay)
     suspend fun triggerSync() {
         withContext(Dispatchers.IO) {
