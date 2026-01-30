@@ -111,15 +111,18 @@ def main():
         for cat in target_categories:
             try:
                 # Get the single highest rated article for this category from top 50 recent
+                # Get the single highest rated article for this category from top 50 recent
                 res = db.client.from_('articles')\
                     .select('*')\
                     .eq('category', cat)\
-                    .order('trust_score', desc=True)\
-                    .limit(1)\
-                    .execute()
+                    .order('published', desc=True)\
+                    .limit(3)\
+                    .execute() # Get top 3 latest, then pick highest score
                 
-                if res.data and len(res.data) > 0:
-                    diverse_selection.append(res.data[0])
+                # Sort these 3 by trust_score locally to get "Best of Latest"
+                if res.data:
+                    best_recent = sorted(res.data, key=lambda x: x.get('trust_score', 0), reverse=True)[0]
+                    diverse_selection.append(best_recent)
             except Exception as e:
                 print(f"Failed to fetch for {cat}: {e}")
                 continue

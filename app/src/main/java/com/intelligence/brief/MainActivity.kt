@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import androidx.lifecycle.lifecycleScope
 import com.intelligence.brief.ui.theme.BriefTheme
 import androidx.compose.material3.pulltorefresh.*
@@ -641,20 +642,24 @@ fun FeedScreen(
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
     // Refresh function - reloads from scratch
+    // Refresh function - reloads from scratch
     fun refresh() {
         scope.launch {
             isRefreshing = true
             repository.triggerSync()
+            delay(2000) // Visual Feedback Delay
             currentPage = 0
-            articles = repository.fetchArticles(0)
-            hasMore = articles.size >= DataRepository.PAGE_SIZE
+            val newArticles = repository.fetchArticles(0)
+            if (newArticles.isNotEmpty()) {
+                articles = newArticles
+                hasMore = newArticles.size >= DataRepository.PAGE_SIZE
+            }
             isRefreshing = false
         }
     }
 
     // Initial load
     LaunchedEffect(true) {
-        // 1. Load Cache for Instant UI
         val cached = withContext(Dispatchers.IO) { repository.getCachedFeed() }
         if (cached.isNotEmpty()) {
             articles = cached
@@ -662,8 +667,9 @@ fun FeedScreen(
             isLoading = true
         }
 
-        // 2. Fetch Fresh Data (Background)
         try {
+            // Short delay to ensure cache doesn't flash too fast if empty
+            delay(300)
             val fresh = repository.fetchArticles(0)
             if (fresh.isNotEmpty()) {
                 articles = fresh
@@ -690,7 +696,8 @@ fun FeedScreen(
                 val moreArticles = repository.fetchArticles(currentPage)
                 if (moreArticles.isEmpty()) { hasMore = false } 
                 else { 
-                    articles = articles + moreArticles
+                    // Deduplicate to prevent repeated entries
+                    articles = (articles + moreArticles).distinctBy { it.link }
                     hasMore = moreArticles.size >= DataRepository.PAGE_SIZE
                 }
                 isLoading = false

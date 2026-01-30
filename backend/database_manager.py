@@ -91,14 +91,15 @@ class DatabaseManager:
         """Feature 9: Save the Top 3 stories for the Morning Reel."""
         if not self.client: return
         try:
-            today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+            # Update: Use timestamp to allow multiple updates per day (e.g. Morning, Noon, Pulse)
+            today_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             data = {
                 "date_str": today_str,
                 "content": content_json
             }
-            # Upsert so we only have one Reel per day (updating it as news breaks)
+            # Upsert will now act like Insert because date_str is unique per minute
             self.client.table("daily_briefings").upsert(data, on_conflict="date_str").execute()
-            print(f"✅ Saved Morning Reel for {today_str}")
+            print(f"✅ Saved Daily Pulse for {today_str}")
         except Exception as e:
             print(f"Failed to save Morning Reel: {e}")
 
