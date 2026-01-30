@@ -28,6 +28,7 @@ class IntelligenceAgent:
             article["icon"] = "file-text"
             return article
 
+        prompt = f"""
         You are an elite intelligence analyst. Analyze this news item:
         Title: {article['title']}
         Source: {article['source']}
