@@ -199,7 +199,8 @@ class MainActivity : ComponentActivity() {
             registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
         }
 
-        checkForUpdates()
+        // REMOVED explicit checkForUpdates() here because onResume (below) handles it.
+        // checkForUpdates()
 
 
         setContent {
