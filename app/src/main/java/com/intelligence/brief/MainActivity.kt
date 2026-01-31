@@ -249,7 +249,10 @@ class MainActivity : ComponentActivity() {
                             isDarkMode = isDarkMode,
                             currentRegion = currentRegionState.value,
                             onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true },
-                            onRegionChange = { currentRegionState.value = it }
+                            onRegionChange = { 
+                                repository.saveRegion(it)
+                                currentRegionState.value = it 
+                            }
                         )
                         
                         // Update Dialog

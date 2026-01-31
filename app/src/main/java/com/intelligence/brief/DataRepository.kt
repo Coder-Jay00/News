@@ -99,7 +99,8 @@ class DataRepository(private val context: Context) {
     // Data Fetching with Pagination - Server Side Filtering & Sorting
     suspend fun fetchArticles(page: Int = 0, category: String? = null): List<Article> {
         val interests = getInterests()
-        android.util.Log.d("DataRepo", "Fetching articles for page $page with interests: $interests, filter: $category")
+        val region = getRegion()
+        android.util.Log.d("DataRepo", "Fetching articles for page $page with interests: $interests, filter: $category, region: $region")
         
         if (interests.isEmpty()) {
             android.util.Log.w("DataRepo", "No interests selected, returning empty list")
@@ -113,6 +114,12 @@ class DataRepository(private val context: Context) {
             val response = supabase.from("articles")
                 .select() {
                     filter {
+                        // Region Filter
+                        if (region != "Global") {
+                            eq("region", region)
+                        }
+                        
+                        // Category Filter
                         if (!category.isNullOrEmpty() && category != "All") {
                             eq("category", category)
                         } else {
