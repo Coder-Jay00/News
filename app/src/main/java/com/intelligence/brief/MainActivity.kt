@@ -368,9 +368,7 @@ class MainActivity : ComponentActivity() {
                     showUpdateDialogState.value = true
                 } else {
                     android.util.Log.d("UpdateDebug", "No update found (or error).")
-                    withContext(Dispatchers.Main) {
-                        android.widget.Toast.makeText(this@MainActivity, "Brief is up to date", android.widget.Toast.LENGTH_SHORT).show()
-                    }
+                    // Silent on success (Professional behavior)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("UpdateDebug", "Check failed", e)
