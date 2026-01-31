@@ -145,6 +145,7 @@ class DataRepository(private val context: Context) {
     // Feature 9: Fetch Morning Reel
     suspend fun fetchMorningReel(): DailyReel? {
         try {
+            android.util.Log.d("DataRepo", "Fetching Morning Reel...")
             // Get today's reel
             val response = supabase.from("daily_briefings")
                 .select() {
@@ -152,9 +153,12 @@ class DataRepository(private val context: Context) {
                     limit(1)
                 }
             val wrappers = response.decodeList<ReelWrapper>()
-            return wrappers.firstOrNull()?.content
+            android.util.Log.d("DataRepo", "Morning Reel response: ${wrappers.size} items")
+            val result = wrappers.firstOrNull()?.content
+            android.util.Log.d("DataRepo", "Morning Reel stories: ${result?.stories?.size ?: 0}")
+            return result
         } catch (e: Exception) {
-            android.util.Log.e("DataRepo", "Error fetching reel: ${e.message}")
+            android.util.Log.e("DataRepo", "Error fetching reel: ${e.message}", e)
             return null
         }
     }
