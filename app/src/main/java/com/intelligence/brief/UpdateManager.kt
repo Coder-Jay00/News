@@ -41,6 +41,8 @@ class UpdateManager(private val context: Context) {
                 val release = json.decodeFromString<GitHubRelease>(response)
                 
                 // 2. Compare Versions
+                android.util.Log.d("UpdateManager", "Current: $currentVersion, Cloud: ${release.tag_name}")
+                
                 if (release.tag_name != currentVersion) {
                     // Return (Version, URL)
                     val asset = release.assets.find { it.name.endsWith(".apk") } 

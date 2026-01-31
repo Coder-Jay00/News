@@ -373,6 +373,7 @@ class MainActivity : ComponentActivity() {
                     // Not downloaded -> Silent Download
                     downloadId = updateManager.triggerUpdate(updateUrl, version)
                     android.util.Log.d("Update", "Silently starting download for $version")
+                    android.widget.Toast.makeText(this@MainActivity, "Downloading Update $version...", android.widget.Toast.LENGTH_LONG).show()
                     // Do NOT show dialog yet
                 }
         }
