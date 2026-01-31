@@ -45,11 +45,13 @@ class UpdateManager(private val context: Context) {
                 
                 if (isNewerVersion(release.tag_name, currentVersion)) {
                     // Return (Version, URL)
-                    val asset = release.assets.find { it.name.endsWith(".apk") } 
-                                ?: release.assets.find { it.name.endsWith(".zip") }
+                    val asset = release.assets.find { it.name.endsWith(".apk", ignoreCase = true) } 
                     
-                    val url = asset?.browser_download_url ?: "https://brief-iota.vercel.app/"
-                    return@withContext Pair(release.tag_name, url)
+                    if (asset != null) {
+                         return@withContext Pair(release.tag_name, asset.browser_download_url)
+                    } else {
+                        android.util.Log.e("UpdateManager", "Release ${release.tag_name} has no APK asset.")
+                    }
                 } 
                 
                 android.util.Log.d("UpdateManager", "App is up to date (or newer than cloud).")
