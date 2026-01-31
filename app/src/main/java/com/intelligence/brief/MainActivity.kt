@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,6 +56,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
@@ -995,11 +1003,14 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenUrl: (String) -> Unit
 ) {
-    val currentInterests = repository.getInterests()
+    var watchlistKeyword by remember { mutableStateOf("") }
+    // State for instant interaction
+    var currentRegion by remember { mutableStateOf(repository.getRegion()) }
+    var bookmarks by remember { mutableStateOf(repository.getBookmarks()) }
+    var history by remember { mutableStateOf(repository.getHistory()) }
+    
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    var watchlistKeyword by remember { mutableStateOf("") }
-    val currentRegion = repository.getRegion()
     
     // Helpers
     @Composable
@@ -1008,17 +1019,17 @@ fun SettingsScreen(
             title.uppercase(), 
             style = MaterialTheme.typography.labelSmall, 
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary, // Using primary for high-tech feel
-            modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
-            letterSpacing = 1.5.sp
+            color = MaterialTheme.colorScheme.primary, 
+            modifier = Modifier.padding(start = 24.dp, top = 32.dp, bottom = 12.dp), // Increased spacing
+            letterSpacing = 2.sp // Technical spacing
         )
     }
 
     Scaffold(
-        containerColor = Color(0xFF121212), // Deep Matte Black (Pro)
+        containerColor = Color(0xFF121212), // Deep Matte Black
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("SETTINGS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }, // Uppercase Title
+                title = { Text("SETTINGS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, letterSpacing = 2.sp) }, 
                 navigationIcon = { 
                     IconButton(onClick = onBack) { 
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White) 
@@ -1031,24 +1042,25 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) { // Enable scroll for smaller screens
             
-            // 1. WATCHLIST (High Tech Input)
+            // 1. WATCHLIST
             SectionHeader("Intelligence Alerts")
-            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                 OutlinedTextField(
                     value = watchlistKeyword,
                     onValueChange = { watchlistKeyword = it },
-                    label = { Text("Add Keyword (e.g. NVIDIA)") },
+                    label = { Text("Add Keyword", color = Color.Gray) },
+                    placeholder = { Text("e.g. NVIDIA", color = Color.DarkGray) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }, // Notifications -> Email
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     trailingIcon = {
                         if (watchlistKeyword.isNotEmpty()) {
                             IconButton(onClick = {
                                 scope.launch {
                                     repository.addWatchlistKeyword(watchlistKeyword)
-                                    android.widget.Toast.makeText(context, "Alert added: $watchlistKeyword", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, "Alert added for '$watchlistKeyword'", android.widget.Toast.LENGTH_SHORT).show()
                                     watchlistKeyword = ""
                                 }
                             }) {
@@ -1057,72 +1069,97 @@ fun SettingsScreen(
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF1E1E1E),
-                        unfocusedContainerColor = Color(0xFF1E1E1E),
+                        focusedContainerColor = Color(0xFF1A1A1A), // Slightly lighter than bg
+                        unfocusedContainerColor = Color(0xFF1A1A1A),
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = Color.DarkGray,
+                        unfocusedBorderColor = Color(0xFF333333), // Subtle border
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.LightGray
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(8.dp) // Tighter corners
                 )
             }
             
-            // 2. REGION (Segmented Control style)
+            // 2. REGION (Custom Segmented Control)
             SectionHeader("Edition")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 24.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFF1A1A1A))
+                    .border(1.dp, Color(0xFF333333), RoundedCornerShape(8.dp)),
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 listOf("Global", "India", "USA").forEach { region ->
                     val isSelected = currentRegion == region
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { 
-                            repository.saveRegion(region)
-                            android.widget.Toast.makeText(context, "Edition: $region", android.widget.Toast.LENGTH_SHORT).show()
-                        },
-                        label = { Text(region, fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha=0.15f) else Color.Transparent)
+                            .clickable { 
+                                currentRegion = region // Instant Update
+                                repository.saveRegion(region)
+                                // Optional: Re-fetch feed via callback if needed, but for now just visual
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            region, 
+                            fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if(isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                            style = MaterialTheme.typography.bodyMedium
                         )
-                    )
+                    }
+                    // Vertical divider
+                    if (region != "USA") {
+                        Divider(modifier = Modifier.width(1.dp).height(24.dp).align(Alignment.CenterVertically), color = Color(0xFF333333))
+                    }
                 }
             }
 
             // 3. BOOKMARKS
-            val bookmarks = repository.getBookmarks()
             if (bookmarks.isNotEmpty()) {
                 SectionHeader("Saved Briefs")
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(bookmarks) { article ->
                         Card(
-                            modifier = Modifier.width(200.dp).height(110.dp),
-                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.width(220.dp).height(120.dp), // Slightly wider
+                            shape = RoundedCornerShape(8.dp),
                             onClick = { onOpenUrl(article.link) },
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                            border = BorderStroke(0.5.dp, Color(0xFF333333))
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    article.title, 
-                                    maxLines = 3, 
-                                    overflow = TextOverflow.Ellipsis, 
-                                    style = MaterialTheme.typography.bodyMedium, 
-                                    color = Color.White,
-                                    lineHeight = 18.sp
-                                )
-                                Spacer(Modifier.weight(1f))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(article.source, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        article.title, 
+                                        maxLines = 3, 
+                                        overflow = TextOverflow.Ellipsis, 
+                                        style = MaterialTheme.typography.bodyMedium, 
+                                        color = Color.White,
+                                        lineHeight = 18.sp
+                                    )
+                                    Spacer(Modifier.weight(1f))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(article.source, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                    }
+                                }
+                                // Delete Button (Top Right)
+                                IconButton(
+                                    onClick = { 
+                                        repository.removeBookmark(article.id)
+                                        bookmarks = repository.getBookmarks() // Refresh State
+                                    },
+                                    modifier = Modifier.align(Alignment.TopEnd).size(32.dp)
+                                ) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = Color.Gray, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
@@ -1130,12 +1167,11 @@ fun SettingsScreen(
                 }
             }
             
-            // 4. HISTORY (Clean List)
-            val history = repository.getHistory()
+            // 4. HISTORY
             if (history.isNotEmpty()) {
                 SectionHeader("Recent Access")
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(history) { article ->
+                Column(modifier = Modifier.padding(horizontal = 8.dp)) { // Use Column inside Scrollable Column
+                    history.take(8).forEach { article -> // Limit visually
                         ListItem(
                              modifier = Modifier.clickable { onOpenUrl(article.link) },
                              colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -1152,32 +1188,32 @@ fun SettingsScreen(
                                  Icon(
                                      Icons.Filled.DateRange, 
                                      contentDescription = null, 
-                                     tint = Color.Gray, // Darker grey for subtlety
-                                     modifier = Modifier.size(20.dp)
+                                     tint = Color.DarkGray,
+                                     modifier = Modifier.size(18.dp)
                                  ) 
                              },
                              trailingContent = {
                                  Text(
-                                     getRelativeTime(article.published).replace(" ago", ""), // Shorten time
+                                     getRelativeTime(article.published).replace(" ago", ""), // Shorten
                                      style = MaterialTheme.typography.labelSmall,
-                                     color = Color.DarkGray
+                                     color = Color(0xFF444444) // Subtler
                                  )
                              }
                         )
-                        Divider(color = Color(0xFF1E1E1E), thickness = 1.dp, modifier = Modifier.padding(start = 56.dp))
+                        Divider(color = Color(0xFF1A1A1A), thickness = 1.dp, modifier = Modifier.padding(start = 56.dp))
                     }
                 }
             } else {
                 Spacer(Modifier.weight(1f))
             }
             
-            // Footer
+            Spacer(Modifier.height(48.dp))
             Box(
                 modifier = Modifier.fillMaxWidth().padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "BRIEF. SYSTEM v${BuildConfig.VERSION_NAME}", 
+                    "BRIEF. v${BuildConfig.VERSION_NAME}", 
                     style = MaterialTheme.typography.labelSmall, 
                     color = Color.DarkGray,
                     letterSpacing = 2.sp

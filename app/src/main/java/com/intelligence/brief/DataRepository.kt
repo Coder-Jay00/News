@@ -235,6 +235,15 @@ class DataRepository(private val context: Context) {
         prefs.edit().putString("bookmarks", Json.encodeToString(current)).apply()
     }
 
+    fun removeBookmark(articleId: String) {
+        val current = getBookmarks().toMutableList()
+        val index = current.indexOfFirst { it.id == articleId }
+        if (index != -1) {
+            current.removeAt(index)
+            prefs.edit().putString("bookmarks", Json.encodeToString(current)).apply()
+        }
+    }
+
     // Feature 6 (Retention): History System (Max 20)
     fun getHistory(): List<Article> {
         val json = prefs.getString("reading_history", "[]") ?: "[]"
