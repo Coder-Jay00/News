@@ -350,17 +350,30 @@ class MainActivity : ComponentActivity() {
     // installApk removed per user request
 
     private fun checkForUpdates() {
+        android.util.Log.d("UpdateDebug", "checkForUpdates called")
+        // android.widget.Toast.makeText(this, "Checking for updates...", android.widget.Toast.LENGTH_SHORT).show()
+        
         lifecycleScope.launch {
-            val updateInfo = updateManager.checkForUpdate()
-            if (updateInfo != null) {
-                val (version, updateUrl) = updateInfo
-                
-                updateVersionState.value = version
-                updateUrlState.value = updateUrl
-                
-                // Check if already downloaded
-                isUpdateReadyState.value = updateManager.isUpdateDownloaded(version)
-                showUpdateDialogState.value = true
+            try {
+                val updateInfo = updateManager.checkForUpdate()
+                if (updateInfo != null) {
+                    val (version, updateUrl) = updateInfo
+                    android.util.Log.d("UpdateDebug", "Update found: $version")
+                    
+                    updateVersionState.value = version
+                    updateUrlState.value = updateUrl
+                    
+                    // Check if already downloaded
+                    isUpdateReadyState.value = updateManager.isUpdateDownloaded(version)
+                    showUpdateDialogState.value = true
+                } else {
+                    android.util.Log.d("UpdateDebug", "No update found (or error).")
+                    withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(this@MainActivity, "Brief is up to date", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("UpdateDebug", "Check failed", e)
             }
         }
     }
