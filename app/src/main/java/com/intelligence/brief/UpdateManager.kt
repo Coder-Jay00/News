@@ -15,6 +15,13 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Serializable
+data class VersionInfo(
+    val version: String,
+    val url: String
+)
+
+// Keep for backward compatibility (unused)
+@Serializable
 data class GitHubRelease(
     val tag_name: String,
     val html_url: String,
@@ -31,32 +38,31 @@ class UpdateManager(private val context: Context) {
     private val client = HttpClient()
     private val json = Json { ignoreUnknownKeys = true }
     private val currentVersion = "v" + BuildConfig.VERSION_NAME 
-    private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
+    
+    // NEW: Use Vercel-hosted JSON instead of GitHub Releases API
+    private val versionUrl = "https://brief-iota.vercel.app/version.json"
 
     suspend fun checkForUpdate(): Pair<String, String>? {
         return withContext(Dispatchers.IO) {
             try {
-                // 1. Fetch Latest Release
-                val response = client.get(repoUrl).bodyAsText()
-                val release = json.decodeFromString<GitHubRelease>(response)
+                // 1. Fetch version.json from Vercel
+                val response = client.get(versionUrl).bodyAsText()
+                val versionInfo = json.decodeFromString<VersionInfo>(response)
+                
+                val cloudVersion = "v" + versionInfo.version.removePrefix("v") // Normalize
                 
                 // 2. Compare Versions
-                android.util.Log.d("UpdateManager", "Current: $currentVersion, Cloud: ${release.tag_name}")
+                android.util.Log.d("UpdateManager", "Current: $currentVersion, Cloud: $cloudVersion")
                 
-                if (isNewerVersion(release.tag_name, currentVersion)) {
+                if (isNewerVersion(cloudVersion, currentVersion)) {
                     // Return (Version, URL)
-                    val asset = release.assets.find { it.name.endsWith(".apk", ignoreCase = true) } 
-                    
-                    if (asset != null) {
-                         return@withContext Pair(release.tag_name, asset.browser_download_url)
-                    } else {
-                        android.util.Log.e("UpdateManager", "Release ${release.tag_name} has no APK asset.")
-                    }
+                    return@withContext Pair(cloudVersion, versionInfo.url)
                 } 
                 
                 android.util.Log.d("UpdateManager", "App is up to date (or newer than cloud).")
                 return@withContext null
             } catch (e: Exception) {
+                android.util.Log.e("UpdateManager", "Update check failed: ${e.message}")
                 e.printStackTrace()
                 return@withContext null
             }
