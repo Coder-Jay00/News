@@ -43,19 +43,39 @@ class UpdateManager(private val context: Context) {
                 // 2. Compare Versions
                 android.util.Log.d("UpdateManager", "Current: $currentVersion, Cloud: ${release.tag_name}")
                 
-                if (release.tag_name != currentVersion) {
+                if (isNewerVersion(release.tag_name, currentVersion)) {
                     // Return (Version, URL)
                     val asset = release.assets.find { it.name.endsWith(".apk") } 
                                 ?: release.assets.find { it.name.endsWith(".zip") }
                     
                     val url = asset?.browser_download_url ?: "https://brief-iota.vercel.app/"
                     return@withContext Pair(release.tag_name, url)
-                }
+                } 
+                
+                android.util.Log.d("UpdateManager", "App is up to date (or newer than cloud).")
                 return@withContext null
             } catch (e: Exception) {
                 e.printStackTrace()
                 return@withContext null
             }
+        }
+    }
+
+    private fun isNewerVersion(cloud: String, local: String): Boolean {
+        try {
+            val v1 = cloud.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
+            val v2 = local.removePrefix("v").split(".").map { it.toIntOrNull() ?: 0 }
+            
+            val limit = maxOf(v1.size, v2.size)
+            for (i in 0 until limit) {
+                val num1 = v1.getOrElse(i) { 0 }
+                val num2 = v2.getOrElse(i) { 0 }
+                if (num1 > num2) return true
+                if (num1 < num2) return false
+            }
+            return false // Equal
+        } catch (e: Exception) {
+            return cloud != local // Fallback
         }
     }
 
