@@ -147,7 +147,24 @@ class MainActivity : ComponentActivity() {
     private lateinit var updateManager: UpdateManager
     
     // Update UI State
-    // State removed per user request
+    // Update UI State
+    private var updateUrlState = mutableStateOf<String?>(null)
+    private var updateVersionState = mutableStateOf<String>("latest")
+    private var showUpdateDialogState = mutableStateOf(false)
+    private var isUpdateReadyState = mutableStateOf(false) // Track if download completed
+
+    private val onDownloadComplete = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (downloadId == id) {
+                // Download finished. Update UI to show "Install"
+                isUpdateReadyState.value = true
+                android.widget.Toast.makeText(context, "Download Complete", android.widget.Toast.LENGTH_SHORT).show()
+                // Ensure dialog is open (if closed by accident)
+                showUpdateDialogState.value = true
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -181,10 +198,19 @@ class MainActivity : ComponentActivity() {
         NewsSyncWorker.schedule(this)
 
         // Setup UpdateManager
-        // Update functionality removed
-
-        // REMOVED explicit checkForUpdates() here because onResume (below) handles it.
-        // checkForUpdates()
+        updateManager = UpdateManager(this)
+        
+        // Register download receiver with Android 14+ compatibility
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.registerReceiver(
+                this,
+                onDownloadComplete,
+                IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                ContextCompat.RECEIVER_EXPORTED
+            )
+        } else {
+            registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        }
 
 
         setContent {
@@ -193,8 +219,22 @@ class MainActivity : ComponentActivity() {
             // Region state (Hoisted for App-wide refresh)
             val currentRegionState = remember { mutableStateOf(repository.getRegion()) }
             
-            // Lifecycle monitoring removed per user request
+            // Monitor Lifecycle for periodic update checks
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner) {
+                val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                        checkForUpdates()
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            }
             
+            val showUpdateDialog by remember { showUpdateDialogState }
+            val updateUrl by remember { updateUrlState }
+            val isUpdateReady by remember { isUpdateReadyState } // From Receiver
+
             // Compute effective theme (null = follow system automatically)
             val useDarkTheme = isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
             
@@ -212,7 +252,54 @@ class MainActivity : ComponentActivity() {
                             onRegionChange = { currentRegionState.value = it }
                         )
                         
-                        // Update Dialog removed per user request
+                        // Update Dialog
+                        if (showUpdateDialog && updateUrl != null) {
+                            val targetVersion = updateVersionState.value
+                            // Local state for "Downloading..." spinner visibility before receiver fires
+                            var isDownloadingLocally by remember { mutableStateOf(false) }
+
+                            AlertDialog(
+                                onDismissRequest = { 
+                                    // Make dismissible (User Preference: Dialog + Dismiss)
+                                    if (!isDownloadingLocally) showUpdateDialogState.value = false 
+                                },
+                                title = { Text(if (isDownloadingLocally && !isUpdateReady) "Downloading Update..." else "Update Available") },
+                                text = { 
+                                    Column {
+                                        Text("A new version of Brief. ($targetVersion) is ready.")
+                                        if (isDownloadingLocally && !isUpdateReady) {
+                                            Spacer(Modifier.height(16.dp))
+                                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                            Spacer(Modifier.height(8.dp))
+                                            Text("Please wait...", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(
+                                        enabled = !(isDownloadingLocally && !isUpdateReady), // Disable while downloading
+                                        onClick = {
+                                            if (isUpdateReady) {
+                                                installApk(targetVersion)
+                                                showUpdateDialogState.value = false
+                                            } else {
+                                                isDownloadingLocally = true
+                                                startDownload(updateUrl!!, targetVersion)
+                                            }
+                                        }
+                                    ) {
+                                        Text(if (isUpdateReady) "Install" else if (isDownloadingLocally) "Downloading..." else "Update Now")
+                                    }
+                                },
+                                dismissButton = {
+                                    if (!isDownloadingLocally) {
+                                        TextButton(onClick = { showUpdateDialogState.value = false }) {
+                                            Text("Later")
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -262,6 +349,73 @@ class MainActivity : ComponentActivity() {
 
     // installApk removed per user request
 
+    private fun checkForUpdates() {
+        lifecycleScope.launch {
+            val updateInfo = updateManager.checkForUpdate()
+            if (updateInfo != null) {
+                val (version, updateUrl) = updateInfo
+                
+                updateVersionState.value = version
+                updateUrlState.value = updateUrl
+                
+                // Check if already downloaded
+                isUpdateReadyState.value = updateManager.isUpdateDownloaded(version)
+                showUpdateDialogState.value = true
+            }
+        }
+    }
+
+    private fun startDownload(url: String, version: String) {
+         downloadId = updateManager.triggerUpdate(url, version)
+         // isUpdateReadyState remains false until receiver fires
+    }
+
+    private fun installApk(version: String = "latest") {
+        val uri = updateManager.getDownloadedFileUri(version)
+        if (uri != null) {
+            val file = File(uri.path!!)
+            try {
+                // Check if we can install unknown apps (Android 8.0+)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (!packageManager.canRequestPackageInstalls()) {
+                        val settingsIntent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(settingsIntent)
+                        return
+                    }
+                }
+
+                // For Android 7.0+ we MUST use FileProvider
+                val contentUri = FileProvider.getUriForFile(
+                    this,
+                    "$packageName.fileprovider",
+                    file
+                )
+                
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    setDataAndType(contentUri, "application/vnd.android.package-archive")
+                }
+                startActivity(installIntent)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Installation failed", e)
+                android.widget.Toast.makeText(this, "Installation failed. Please try manual install from downloads.", android.widget.Toast.LENGTH_LONG).show()
+                // Browser fallback? No, user wants In-App.
+                // But if fails, we might as well fallback.
+                try {
+                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrlState.value ?: "https://github.com/Coder-Jay00/News/releases"))
+                     startActivity(browserIntent)
+                } catch (e2: Exception) {}
+            }
+        } else {
+            android.widget.Toast.makeText(this, "Update file not found. Re-downloading...", android.widget.Toast.LENGTH_SHORT).show()
+            // Reset state
+            isUpdateReadyState.value = false
+        }
+    }
+
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!NotificationHelper.hasNotificationPermission(this)) {
@@ -278,7 +432,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Receiver unregister removed
+        try {
+            unregisterReceiver(onDownloadComplete)
+        } catch (e: Exception) {
+            // Already unregistered or not registered
+        }
     }
 }
 
