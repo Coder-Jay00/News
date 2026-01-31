@@ -360,16 +360,9 @@ class MainActivity : ComponentActivity() {
 
     private fun checkForUpdates() {
         lifecycleScope.launch {
-            val updateUrl = updateManager.checkForUpdate()
-            if (updateUrl != null) {
-                // For auto-check, we don't know the exact version yet, but we'll try to get it from the URL
-                val version = if (updateUrl.contains("/download/v")) {
-                    updateUrl.substringAfter("/download/v").substringBefore("/")
-                } else if (updateUrl.contains("/tags/v")) {
-                    updateUrl.substringAfter("/tags/v").substringBefore("/")
-                } else {
-                    "v1.2.6" // Default to current intended version if check fails
-                }
+            val updateInfo = updateManager.checkForUpdate()
+            if (updateInfo != null) {
+                val (version, updateUrl) = updateInfo
                 
                 updateVersionState.value = version
                 updateUrlState.value = updateUrl

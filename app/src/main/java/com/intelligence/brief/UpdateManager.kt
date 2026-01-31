@@ -33,21 +33,21 @@ class UpdateManager(private val context: Context) {
     private val currentVersion = "v" + BuildConfig.VERSION_NAME 
     private val repoUrl = "https://api.github.com/repos/Coder-Jay00/News/releases/latest"
 
-    suspend fun checkForUpdate(): String? {
+    suspend fun checkForUpdate(): Pair<String, String>? {
         return withContext(Dispatchers.IO) {
             try {
                 // 1. Fetch Latest Release
                 val response = client.get(repoUrl).bodyAsText()
                 val release = json.decodeFromString<GitHubRelease>(response)
                 
-                // 2. Compare Versions (Simple String Comparison for now)
-                // In production, use a proper SemVer parser
+                // 2. Compare Versions
                 if (release.tag_name != currentVersion) {
-                    // Return the download URL (check for APK, then ZIP, then point to Website)
+                    // Return (Version, URL)
                     val asset = release.assets.find { it.name.endsWith(".apk") } 
                                 ?: release.assets.find { it.name.endsWith(".zip") }
                     
-                    return@withContext asset?.browser_download_url ?: "https://brief-iota.vercel.app/"
+                    val url = asset?.browser_download_url ?: "https://brief-iota.vercel.app/"
+                    return@withContext Pair(release.tag_name, url)
                 }
                 return@withContext null
             } catch (e: Exception) {
