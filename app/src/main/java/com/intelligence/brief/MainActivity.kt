@@ -370,16 +370,8 @@ class MainActivity : ComponentActivity() {
                 
                 updateVersionState.value = version
                 updateUrlState.value = updateUrl
-                if (updateManager.isUpdateDownloaded(version)) {
-                    // Already downloaded -> Prompt to Install
-                    showUpdateDialogState.value = true
-                } else {
-                    // Not downloaded -> Silent Download
-                    downloadId = updateManager.triggerUpdate(updateUrl, version)
-                    android.util.Log.d("Update", "Silently starting download for $version")
-                    android.widget.Toast.makeText(this@MainActivity, "Downloading Update $version...", android.widget.Toast.LENGTH_LONG).show()
-                    // Do NOT show dialog yet
-                }
+                // Show dialog immediately. The Dialog handles Download vs Install logic.
+                showUpdateDialogState.value = true
         }
         }
     }
