@@ -213,8 +213,10 @@ class MainActivity : ComponentActivity() {
 
 
         setContent {
-            // Theme state: null = follow device system theme (default behavior)
+            // Theme state
             var isDarkMode by remember { mutableStateOf<Boolean?>(null) }
+            // Region state (Hoisted for App-wide refresh)
+            val currentRegionState = remember { mutableStateOf(repository.getRegion()) }
             
             // Monitor Lifecycle for periodic update checks
             val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -242,7 +244,9 @@ class MainActivity : ComponentActivity() {
                         AppNavigator(
                             repository = repository,
                             isDarkMode = isDarkMode,
-                            onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true }
+                            currentRegion = currentRegionState.value,
+                            onToggleTheme = { isDarkMode = if (isDarkMode == true) false else true },
+                            onRegionChange = { currentRegionState.value = it }
                         )
                         
                         // Compose-based Update Dialog
@@ -598,7 +602,9 @@ fun MorningReelScreen(
 fun AppNavigator(
     repository: DataRepository,
     isDarkMode: Boolean?,
-    onToggleTheme: () -> Unit
+    currentRegion: String,
+    onToggleTheme: () -> Unit,
+    onRegionChange: (String) -> Unit
 ) {
     var isOnboarded by remember { mutableStateOf(repository.isOnboarded()) }
     var currentScreen by remember { mutableStateOf("feed") } // simple router
@@ -609,7 +615,9 @@ fun AppNavigator(
             SettingsScreen(
                 repository = repository,
                 onBack = { currentScreen = "feed" },
-                onOpenUrl = { url -> uriHandler.openUri(url) }
+                onOpenUrl = { url -> uriHandler.openUri(url) },
+                currentRegionState = currentRegion,
+                onRegionChange = onRegionChange
             )
         }
         "reel" -> {
@@ -623,6 +631,7 @@ fun AppNavigator(
                 FeedScreen(
                     repository = repository,
                     isDarkMode = isDarkMode,
+                    currentRegion = currentRegion,
                     onToggleTheme = onToggleTheme,
                     onOpenSettings = { currentScreen = "settings" },
                     onOpenReel = { currentScreen = "reel" }
@@ -642,6 +651,7 @@ fun AppNavigator(
 fun FeedScreen(
     repository: DataRepository,
     isDarkMode: Boolean?,
+    currentRegion: String,
     onToggleTheme: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenReel: () -> Unit
@@ -680,7 +690,7 @@ fun FeedScreen(
     }
 
     // Initial load
-    LaunchedEffect(selectedCategory) {
+    LaunchedEffect(selectedCategory, currentRegion) {
         isLoading = true
         currentPage = 0
         hasMore = true
@@ -993,13 +1003,14 @@ fun OnboardingScreen(onComplete: (Set<String>) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    repository: DataRepository,
+    repository: DataRepository, 
     onBack: () -> Unit,
-    onOpenUrl: (String) -> Unit
+    onOpenUrl: (String) -> Unit,
+    currentRegionState: String,
+    onRegionChange: (String) -> Unit
 ) {
     var watchlistKeyword by remember { mutableStateOf("") }
-    // State for instant interaction
-    var currentRegion by remember { mutableStateOf(repository.getRegion()) }
+    // State: Bookmarks and History are local triggers for now
     var bookmarks by remember { mutableStateOf(repository.getBookmarks()) }
     var history by remember { mutableStateOf(repository.getHistory()) }
     
@@ -1086,15 +1097,15 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 listOf("Global", "India", "USA").forEach { region ->
-                    val isSelected = currentRegion == region
+                    val isSelected = currentRegionState == region
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha=0.15f) else Color.Transparent)
                             .clickable { 
-                                currentRegion = region // Instant Update
+                                onRegionChange(region)
                                 repository.saveRegion(region)
-                                // Optional: Re-fetch feed via callback if needed, but for now just visual
+                                // Trigger refresh via state
                             }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
